@@ -4,6 +4,7 @@ class RuffboxProcessor extends AudioWorkletProcessor {
     }
 
     loadSample(sampleData, sampleSize){
+	
 	if(!this._sampleBuffers){
 	    this._sampleBuffers = [];
 	}
@@ -17,9 +18,9 @@ class RuffboxProcessor extends AudioWorkletProcessor {
 	
 	// copy to wasm buffer 
 	sampleBuf.set(sampleData);
-	
-	this._sampleBuffers.push([samplePtr, sampleBuf, sampleSize]);
+	//console.log("LOADED size: " + sampleSize + " -- data: " + sampleData );
 	this._wasm.exports.load(samplePtr, sampleSize);
+	this._sampleBuffers.push([samplePtr, sampleBuf, sampleSize]);	
     }
         
     constructor(options) {
@@ -36,7 +37,16 @@ class RuffboxProcessor extends AudioWorkletProcessor {
 		    // grow memory to accomodate full sample ... 
 		    this._wasm.exports.memory.grow(250)
 		    this._size = 128
-		    
+		    		    
+		    if(this._samples) {
+			this._samples.forEach(
+			    function(sampleInfo) {
+				this.loadSample(sampleInfo[0], sampleInfo[1]);
+			    }, this);
+			this._samples = [];			
+		    }
+
+		    // why always last ??
 		    this._outPtr_r = this._wasm.exports.alloc(this._size)		    
 		    this._outBuf_r = new Float32Array (
 			this._wasm.exports.memory.buffer,
@@ -49,20 +59,12 @@ class RuffboxProcessor extends AudioWorkletProcessor {
 			this._outPtr_l,
 			this._size
 		    )
-
-		    if(this._samples){
-			this._samples.forEach(
-			    function(sampleInfo) {
-				this.loadSample(sampleInfo[0],sampleInfo[1]);
-			    }, this);
-			this._samples = [];
-		    }	   
 		})		
 	    } else if (e.data.type === 'loadSample') {
 				
 		let sampleSize = e.data.length;
 		let sampleData = e.data.samples;
-
+		
 		if(!this._samples){
 		    this._samples = [];
 		}
@@ -82,7 +84,7 @@ class RuffboxProcessor extends AudioWorkletProcessor {
     }
     
     process(inputs, outputs, parameters) {
-	if (!this._wasm || !this._sample_set) {
+	if (!this._wasm) {
 	    return true
 	}
 	

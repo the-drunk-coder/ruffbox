@@ -1,5 +1,6 @@
 const ctx = new AudioContext({
-  sampleRate: 44100,
+    sampleRate: 44100,
+    latencyHint: "interactive",
 })
 
 if (ctx.audioWorklet === undefined) {
@@ -14,6 +15,16 @@ if (ctx.audioWorklet === undefined) {
 
 	    if(ctx.state === "suspended") {
 		ctx.resume();
+	    }
+
+	    window.onkeyup = function(e) {
+		var key = e.keyCode ? e.keyCode : e.which;
+		
+		if (key == 66) {
+		    n.port.postMessage({ type: 'trigger', bufNum: 0})
+		} else if (key == 83) {
+		    n.port.postMessage({ type: 'trigger', bufNum: 1})
+		}
 	    }
 	    
 	    const bdTrig = document.getElementById('bassdrum-trigger')
@@ -43,5 +54,7 @@ if (ctx.audioWorklet === undefined) {
 		.then(r => r.arrayBuffer())
 		.then(r => ctx.decodeAudioData(r)
 		      .then(r => n.port.postMessage({ type: 'loadSample', samples: r.getChannelData(0), length: r.length })))
+
+	    
 	})   
 }

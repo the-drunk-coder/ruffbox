@@ -58,3 +58,32 @@ impl Ruffbox {
     }     
 }
 
+
+// TEST TEST TEST 
+#[cfg(test)]
+mod tests {
+    // Note this useful idiom: importing names from outer (for mod tests) scope.
+    use super::*;
+
+    #[test]
+    fn test_basic_playback() {
+        let mut ruff = Ruffbox::new();
+
+        let sample1 = [0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
+        let sample2 = [0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0];
+        
+        let bnum1 = ruff.load(&sample1);
+        let bnum2 = ruff.load(&sample2);
+        
+        ruff.process();
+        
+        ruff.trigger(bnum1);
+        ruff.trigger(bnum2);
+
+        let out_buf = ruff.process();
+        
+        for i in 0..9 {
+            assert_eq!(out_buf[i], sample1[i] + sample2[i]);
+        }        
+    }    
+}
