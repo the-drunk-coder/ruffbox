@@ -20,24 +20,24 @@ if (ctx.audioWorklet === undefined) {
 	    window.onkeyup = function(e) {
 		var key = e.keyCode ? e.keyCode : e.which;
 		
-		if (key == 66) {
-		    n.port.postMessage({ type: 'trigger', bufNum: 0})
-		} else if (key == 83) {
-		    n.port.postMessage({ type: 'trigger', bufNum: 1})
+		if (key === 66) {
+		    n.port.postMessage({ type: 'trigger', sample_id: 'bd'})
+		} else if (key === 83) {
+		    n.port.postMessage({ type: 'trigger', sample_id: 'sn'})
 		}
 	    }
 	    
 	    const bdTrig = document.getElementById('bassdrum-trigger')
 	    bdTrig.addEventListener('change', e => {				
 		if (e.target.value === 1) {
-		    n.port.postMessage({ type: 'trigger', bufNum: 0})
+		    n.port.postMessage({ type: 'trigger', sample_id: 'bd'})
 		}
 	    })
 
 	    const snTrig = document.getElementById('snare-trigger')
 	    snTrig.addEventListener('change', e => {				
 		if (e.target.value === 1) {
-		    n.port.postMessage({ type: 'trigger', bufNum: 1})
+		    n.port.postMessage({ type: 'trigger', sample_id: 'sn'})
 		}
 	    })
 	    	    	    
@@ -48,12 +48,12 @@ if (ctx.audioWorklet === undefined) {
 	    fetch('audio/bd.flac?t=' + new Date().getTime())
 		.then(r => r.arrayBuffer())
 		.then(r => ctx.decodeAudioData(r)
-		      .then(r => n.port.postMessage({ type: 'loadSample', samples: r.getChannelData(0), length: r.length })))
+		      .then(r => n.port.postMessage({ type: 'loadSample', samples: r.getChannelData(0), length: r.length, sample_id: 'bd' })))
 
 	    fetch('audio/sn.flac?t=' + new Date().getTime())
 		.then(r => r.arrayBuffer())
 		.then(r => ctx.decodeAudioData(r)
-		      .then(r => n.port.postMessage({ type: 'loadSample', samples: r.getChannelData(0), length: r.length })))
+		      .then(r => n.port.postMessage({ type: 'loadSample', samples: r.getChannelData(0), length: r.length, sample_id: 'sn' })))
 
 	    
 	})   

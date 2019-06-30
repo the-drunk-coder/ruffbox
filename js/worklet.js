@@ -3,7 +3,7 @@ class RuffboxProcessor extends AudioWorkletProcessor {
 	return []
     }
 
-    loadSample(sampleData, sampleSize){
+    loadSample(sampleData, sampleSize, id){
 	
 	if(!this._sampleBuffers){
 	    this._sampleBuffers = [];
@@ -19,7 +19,14 @@ class RuffboxProcessor extends AudioWorkletProcessor {
 	// copy to wasm buffer 
 	sampleBuf.set(sampleData);
 	//console.log("LOADED size: " + sampleSize + " -- data: " + sampleData );
-	this._wasm.exports.load(samplePtr, sampleSize);
+	let bufNum = this._wasm.exports.load(samplePtr, sampleSize);
+
+	if(!this._sampleMapping) {
+	    this._sampleMapping = {};
+	}
+
+	this._sampleMapping[id] = bufNum;
+		
 	this._sampleBuffers.push([samplePtr, sampleBuf, sampleSize]);	
     }
         
@@ -41,7 +48,7 @@ class RuffboxProcessor extends AudioWorkletProcessor {
 		    if(this._samples) {
 			this._samples.forEach(
 			    function(sampleInfo) {
-				this.loadSample(sampleInfo[0], sampleInfo[1]);
+				this.loadSample(sampleInfo[0], sampleInfo[1], sampleInfo[2]);
 			    }, this);
 			this._samples = [];			
 		    }
@@ -64,20 +71,20 @@ class RuffboxProcessor extends AudioWorkletProcessor {
 				
 		let sampleSize = e.data.length;
 		let sampleData = e.data.samples;
+		let sampleId = e.data.sample_id;
 		
 		if(!this._samples){
 		    this._samples = [];
 		}
 		
 		if(this._wasm){
-		    loadSample(sampleData, sampleSize);
+		    loadSample(sampleData, sampleSize, sampleId);
 		} else {
-		    this._samples.push([sampleData, sampleSize]);
+		    this._samples.push([sampleData, sampleSize, sampleId]);
 		}
 	    } else if (e.data.type === 'trigger') {
-		if(this._wasm) {
-		    console.log("trigger" + e.data.bufNum);
-		    this._wasm.exports.trigger(e.data.bufNum);
+		if(this._wasm) {		
+		    this._wasm.exports.trigger(this._sampleMapping[e.data.sample_id]);
 		}
 	    }
 	}
