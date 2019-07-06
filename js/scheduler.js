@@ -11,6 +11,7 @@ async function get_scheduler() {
     return Scheduler.new();	  
 }
 
+// not precise, just for testing purposes ...
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -19,7 +20,24 @@ self.sleep = sleep;
 
 get_scheduler().then(scheduler => {
     self.scheduler = scheduler;
-    self.scheduler.scheduler_routine();
+
+    // now that we have a scheduler, set scheduler controls ...
+    self.onmessage = function(e) {
+	console.log("scheduler command: " + e.data.cmd);
+	switch (e.data.cmd) {
+	case 'start':
+	    self.scheduler.start();
+	    break;
+	case 'stop':
+	    self.scheduler.stop();
+	    break;
+	case 'evaluate_loop':
+	    self.scheduler.evaluate(e.data.loop_data);
+	    break;
+	}
+    }           
 });
+
+
 
 
