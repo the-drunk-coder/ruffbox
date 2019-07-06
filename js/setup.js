@@ -12,7 +12,7 @@ if (ctx.audioWorklet === undefined) {
 								       numberOfOutputs: 1,
 								       outputChannelCount: [2], } );
 	    n.connect(ctx.destination)
-
+	    	    
 	    if(ctx.state === "suspended") {
 		ctx.resume();
 	    }
@@ -41,7 +41,7 @@ if (ctx.audioWorklet === undefined) {
 		}
 	    })
 	    	    	    
-	    fetch('wasm/ruffbox.wasm?t=' + new Date().getTime())
+	    fetch('wasm/ruffbox_sampler.wasm?t=' + new Date().getTime())
 		.then(r => r.arrayBuffer())
 		.then(r => n.port.postMessage({ type: 'loadWasm', data: r }))
 
@@ -54,7 +54,10 @@ if (ctx.audioWorklet === undefined) {
 		.then(r => r.arrayBuffer())
 		.then(r => ctx.decodeAudioData(r)
 		      .then(r => n.port.postMessage({ type: 'loadSample', samples: r.getChannelData(0), length: r.length, sample_id: 'sn' })))
-
 	    
+	    let scheduler = new Worker('js/scheduler.js', { type : "module"}); 
+	    scheduler.onmessage = function(event) {
+		n.port.postMessage({ type: 'trigger', sample_id: 'bd'})
+	    };	    
 	})   
 }

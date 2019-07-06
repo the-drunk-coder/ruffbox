@@ -1,2 +1,5 @@
-target/*
+ruffbox-sampler/target/*
+ruffbox-scheduler/target/*
+ruffbox-scheduler/pkg/*
 *~
+*.lock
