@@ -97,8 +97,12 @@ if (ctx.audioWorklet === undefined) {
 	    })
 
 	    const startSched = document.getElementById('start-scheduler')
+	    
 	    startSched.addEventListener('change', e => {				
-		if (e.target.value === 1) {		    
+		if (e.target.value === 1) {
+		    if(ctx.state === "suspended"){
+			ctx.resume();
+		    }
 		    scheduler.postMessage({ cmd: 'start', timestamp: ctx.currentTime });		    
 		} else {
 		    scheduler.postMessage({ cmd: 'stop' });

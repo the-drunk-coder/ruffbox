@@ -6,24 +6,31 @@
   </head>
 
   <body>
-    <h1>Play a Beat !11</h1>
-    <h2> Audio Control </h2>
-    <div>
-      <webaudio-switch id="start-audio" defval="0" value="0" type="toggle">Start Audio</webaudio-switch>
-      <webaudio-switch id="start-scheduler" defval="0" value="0" type="toggle">Start Scheduler</webaudio-switch>
-    </div>
+    <h1>Ruffbox - Play a Beat !11</h1>
 
-    <h2> Manual Triggers </h2>
-    <div>      
-      <webaudio-switch id="bassdrum-trigger" defval="0" value="0" type="kick">Bassdrum</webaudio-switch>
-      <webaudio-switch id="snare-trigger" defval="0" value="0" type="kick">Snare</webaudio-switch>
-    </div>
-
+    A text-based beat sequencer.
+    
     <h2> Scriptable Sequencer </h2>
     <div>
-      <textarea id="code_input" style="width:400px; height:300px; vertical-align:top;">bd ~ sn ~ bd ~ sn ~</textarea>
-      <webaudio-switch id="evaluate-loop" defval="0" value="0" type="kick">Evaluate</webaudio-switch>
+      <textarea id="code_input" style="float: left; width:400px; height:300px; vertical-align:top; margin-right: 0px; padding-right: 0px;">
+bd ~ ~ ~ bd ~ ~ ~ bd ~ ~ ~ bd ~ ~ ~
+~ ~ hh ~ ~ ~ hh ~ ~ ~ hh ~ ~ ~ hh ~
+~ ~ ~ ~ sn ~ ~ ~ ~ ~ ~ ~ sn ~ ~ ~ 
+~ ~ casio ~ ~ ~ casio ~ ~ casio ~ ~ ~
+      </textarea>
+      <div style="margin-left: 10px; padding-left: 10px;">
+	<webaudio-switch id="evaluate-loop" defval="0" value="0" type="kick">Evaluate</webaudio-switch><br/>
+	<webaudio-switch id="start-scheduler" defval="0" value="0" type="toggle">Start/Stop</webaudio-switch>
+      </div>
     </div>
+    
+    <div style="clear:left; padding-top: 10px;">      
+      <h2> Manual Triggers (for testing) </h2>      
+      <div>      
+	<webaudio-switch id="bassdrum-trigger" defval="0" value="0" type="kick">Bassdrum</webaudio-switch>
+	<webaudio-switch id="snare-trigger" defval="0" value="0" type="kick">Snare</webaudio-switch>
+      </div>
+    </div>      
     <br/>
     <br/>
     <div>
