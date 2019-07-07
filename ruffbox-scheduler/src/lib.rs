@@ -32,7 +32,25 @@ impl EventSequence {
         }
     }
 
+    pub fn update_sequence(&mut self, input_line: String) {
+        self.events.clear();
+
+        let iter = input_line.split_ascii_whitespace();
+        
+        for event in iter {
+            self.events.push(event.to_string());
+        }
+
+        if self.idx >= self.events.len() {
+            self.idx = self.events.len() - 1;
+        }
+    }
+
     pub fn get_next_event(&mut self) -> &String {
+        if self.events.is_empty() {
+            "~".to_string();
+        }
+        
         let cur_idx = self.idx;
 
         if self.idx + 1 == self.events.len() {
@@ -74,14 +92,21 @@ impl Scheduler {
         }
     }
 
-    pub fn evaluate(&mut self, input: Option<String>) {
-        self.event_sequences.clear();
-        
+    pub fn evaluate(&mut self, input: Option<String>) {        
         match input {
-            Some(all_lines) => {                
+            Some(all_lines) => {
+
+                let mut seq_idx = 0;
+                
                 for line in all_lines.lines() {
+                    
                     if !line.trim().is_empty() {
-                        self.event_sequences.push(EventSequence::from_string(line.to_string()))
+                        if self.event_sequences.len() > seq_idx {
+                            self.event_sequences[seq_idx].update_sequence(line.trim().to_string());
+                        } else {
+                            self.event_sequences.push(EventSequence::from_string(line.trim().to_string()));
+                        }
+                        seq_idx += 1;                        
                     }
                 }
             }
@@ -113,7 +138,7 @@ impl Scheduler {
         if !self.running {
             return
         }
-                
+        
         self.generate_and_send_events();
 
         // calculate drift, correct timing ...
@@ -125,7 +150,7 @@ impl Scheduler {
 
         // browser in milliseconds
         self.browser_logical_time += self.tempo;
-                
+        
         // time-recursive call to scheduler function
         // i'm looking forward to the day I can do that in pure rust ... 
         js! {            

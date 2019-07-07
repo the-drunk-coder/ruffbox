@@ -85,7 +85,6 @@ if (ctx.audioWorklet === undefined) {
 		    n.port.postMessage({ type: 'trigger', sample_id: 'sn', timestamp: 0.0})
 		}
 	    })
-
 	  
 	    const startSched = document.getElementById('start-scheduler')	   
 	    startSched.addEventListener('change', e => {				
