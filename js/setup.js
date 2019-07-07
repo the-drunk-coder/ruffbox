@@ -71,6 +71,8 @@ if (ctx.audioWorklet === undefined) {
 	    // INIT CONTROL ELEMENTS //
 	    ///////////////////////////
 
+	    var running = false;
+	    
 	    // manual triggers
 	    const bdTrig = document.getElementById('bassdrum-trigger')
 	    bdTrig.addEventListener('change', e => {				
@@ -93,9 +95,11 @@ if (ctx.audioWorklet === undefined) {
 			ctx.resume();
 		    }
 		    scheduler.postMessage({ cmd: 'evaluate_loop' , loop_data: document.getElementById('code_input').value });
-		    scheduler.postMessage({ cmd: 'start', timestamp: ctx.currentTime });		    
+		    scheduler.postMessage({ cmd: 'start', timestamp: ctx.currentTime });
+		    running = true;
 		} else {
 		    scheduler.postMessage({ cmd: 'stop' });
+		    running = false;
 		}
 	    })
 
@@ -111,7 +115,24 @@ if (ctx.audioWorklet === undefined) {
 	    ///////////////////////////
 	    
 	    window.onkeydown = function(e) {
-		var key = e.keyCode ? e.keyCode : e.which;				
+		var key = e.keyCode ? e.keyCode : e.which;
+		if(e.ctrlKey && key == 13) {
+		    scheduler.postMessage({ cmd: 'evaluate_loop' , loop_data: document.getElementById('code_input').value });
+		} else if(e.ctrlKey && key == 190) {
+		    if(!running){
+			if(ctx.state === "suspended"){
+			    ctx.resume();
+			}
+			scheduler.postMessage({ cmd: 'evaluate_loop' , loop_data: document.getElementById('code_input').value });
+			scheduler.postMessage({ cmd: 'start', timestamp: ctx.currentTime });
+			document.getElementById('start-scheduler').value = 1;
+			running = true;
+		    } else {
+			scheduler.postMessage({ cmd: 'stop' });			
+			running = false;
+			document.getElementById('start-scheduler').value = 0;
+		    }		    
+		}
 	    }
 	})   
 }
