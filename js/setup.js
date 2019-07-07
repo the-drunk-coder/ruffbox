@@ -43,6 +43,17 @@ if (ctx.audioWorklet === undefined) {
 		.then(r => ctx.decodeAudioData(r)
 		      .then(r => n.port.postMessage({ type: 'loadSample', samples: r.getChannelData(0), length: r.length, sample_id: 'sn' })))
 
+	    // fetch sample files, decode and post them to worklet ...
+	    fetch('audio/hh.flac?t=' + new Date().getTime())
+		.then(r => r.arrayBuffer())
+		.then(r => ctx.decodeAudioData(r)
+		      .then(r => n.port.postMessage({ type: 'loadSample', samples: r.getChannelData(0), length: r.length, sample_id: 'hh' })))
+
+	    fetch('audio/casio.flac?t=' + new Date().getTime())
+		.then(r => r.arrayBuffer())
+		.then(r => ctx.decodeAudioData(r)
+		      .then(r => n.port.postMessage({ type: 'loadSample', samples: r.getChannelData(0), length: r.length, sample_id: 'casio' })))
+
 	    //////////////////////////
 	    // LOAD EVENT SCHEDULER //
 	    //////////////////////////

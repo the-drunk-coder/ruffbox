@@ -11,6 +11,39 @@ macro_rules! log {
     }
 }
 
+struct EventSequence {
+    events: Vec<String>,
+    idx: usize,
+}
+
+impl EventSequence {
+    pub fn from_string(input_line: String) -> Self {
+        let mut seq = Vec::new();
+        let iter = input_line.split_ascii_whitespace();
+        
+        for event in iter {
+            seq.push(event.to_string());
+        }
+
+        EventSequence {
+            events: seq,
+            idx: 0,
+        }
+    }
+
+    pub fn get_next_event(&mut self) -> &String {
+        let cur_idx = self.idx;
+
+        if self.idx + 1 == self.events.len() {
+            self.idx = 0;
+        } else {
+            self.idx += 1;
+        }
+        
+        &self.events[cur_idx]        
+    }
+}
+
 #[wasm_bindgen]
 pub struct Scheduler {
     audio_start_time: f64,
@@ -21,8 +54,7 @@ pub struct Scheduler {
     lookahead: f64, // in seconds
     running: bool,
     tempo: f64, // currently just the duration of a 16th note ... 
-    event_idx: usize,
-    event_sequence: Vec<String>,
+    event_sequences: Vec<EventSequence>,
 }
 
 #[wasm_bindgen]
@@ -37,20 +69,17 @@ impl Scheduler {
             lookahead: 0.100,
             running: false,
             tempo: 128.0,
-            event_idx: 0,
-            event_sequence: Vec::new(),
+            event_sequences: Vec::new(),
         }
     }
 
     pub fn evaluate(&mut self, input: Option<String>) {
-        self.event_sequence.clear();
+        self.event_sequences.clear();
         
         match input {
-            Some(line) => {
-                let iter = line.split_ascii_whitespace();
-
-                for event in iter {
-                    self.event_sequence.push(event.to_string());
+            Some(all_lines) => {                
+                for line in all_lines.lines() {
+                    self.event_sequences.push(EventSequence::from_string(line.to_string()))
                 }
             }
             None => log!("no input!")
@@ -58,24 +87,19 @@ impl Scheduler {
     }
 
     fn generate_and_send_events(&mut self) {
-        if self.event_sequence.is_empty() {
+        if self.event_sequences.is_empty() {
             return
-        }
-        
-        let next_event = &self.event_sequence[self.event_idx];
-        
-        if self.event_idx + 1 == self.event_sequence.len() {
-            self.event_idx = 0;
-        } else {
-            self.event_idx += 1;
         }
 
         let trigger_time = self.audio_logical_time + self.lookahead;
         
-        if next_event != "~" {
-            // post events that will be dispatched to sampler
-            js! {                
-                postMessage( { sample: @{ next_event }, timestamp: @{ trigger_time } } );
+        for seq in self.event_sequences.iter_mut() {
+            let next_event = seq.get_next_event();
+            if next_event != "~" {
+                // post events that will be dispatched to sampler
+                js! {                
+                    postMessage( { sample: @{ next_event }, timestamp: @{ trigger_time } } );
+                }
             }
         }
     }
@@ -87,7 +111,7 @@ impl Scheduler {
                 
         self.generate_and_send_events();
 
-        // calculate drift
+        // calculate drift, correct timing ...
         self.next_schedule_time = self.tempo - (browser_timestamp - self.browser_logical_time);
 
         // advance timestamps
@@ -98,6 +122,7 @@ impl Scheduler {
         self.browser_logical_time += self.tempo;
                 
         // time-recursive call to scheduler function
+        // i'm looking forward to the day I can do that in pure rust ... 
         js! {            
             self.sleep( @{ self.next_schedule_time } ).then( () => self.scheduler.scheduler_routine( performance.now()));
         };                
