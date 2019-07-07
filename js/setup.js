@@ -86,18 +86,8 @@ if (ctx.audioWorklet === undefined) {
 		}
 	    })
 
-	    // scheduler control
-	    const startCtx = document.getElementById('start-audio')
-	    startCtx.addEventListener('change', e => {				
-		if (e.target.value === 1) {
-		    ctx.resume();
-		} else {
-		    ctx.suspend();
-		}
-	    })
-
-	    const startSched = document.getElementById('start-scheduler')
-	    
+	  
+	    const startSched = document.getElementById('start-scheduler')	   
 	    startSched.addEventListener('change', e => {				
 		if (e.target.value === 1) {
 		    if(ctx.state === "suspended"){

@@ -19,6 +19,7 @@ struct EventSequence {
 impl EventSequence {
     pub fn from_string(input_line: String) -> Self {
         let mut seq = Vec::new();
+        
         let iter = input_line.split_ascii_whitespace();
         
         for event in iter {
@@ -79,12 +80,16 @@ impl Scheduler {
         match input {
             Some(all_lines) => {                
                 for line in all_lines.lines() {
-                    self.event_sequences.push(EventSequence::from_string(line.to_string()))
+                    if !line.trim().is_empty() {
+                        self.event_sequences.push(EventSequence::from_string(line.to_string()))
+                    }
                 }
             }
+            
             None => log!("no input!")
-        }        
-    }
+        }
+    }    
+
 
     fn generate_and_send_events(&mut self) {
         if self.event_sequences.is_empty() {
