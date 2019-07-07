@@ -83,8 +83,8 @@ class RuffboxProcessor extends AudioWorkletProcessor {
 		    this._samples.push([sampleData, sampleSize, sampleId]);
 		}
 	    } else if (e.data.type === 'trigger') {
-		if(this._wasm) {		
-		    this._wasm.exports.trigger(this._sampleMapping[e.data.sample_id]);
+		if(this._wasm) {		    		    
+		    this._wasm.exports.trigger(this._sampleMapping[e.data.sample_id], e.data.timestamp);
 		}
 	    }
 	}

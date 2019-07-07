@@ -35,10 +35,9 @@ pub extern "C" fn process(out_ptr_l: *mut f32, out_ptr_r: *mut f32, size: usize,
 }
 
 #[no_mangle]
-pub extern "C" fn trigger(sample_number: usize) {
+pub extern "C" fn trigger(sample_number: usize, timestamp: f64) {
     let mut ruff = RUFF.lock().unwrap();
-    //let now = ruff.get_now();
-    ruff.trigger(sample_number, 0.0);
+    ruff.trigger(sample_number, timestamp);
 }
 
 #[no_mangle]

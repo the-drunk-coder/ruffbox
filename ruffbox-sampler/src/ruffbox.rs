@@ -71,11 +71,7 @@ impl Ruffbox {
             now: 0.0,
         }
     }
-
-    pub fn get_now(&self) -> f64 {
-        self.now
-    }
-        
+           
     pub fn process(&mut self, stream_time: f64) -> [f32; 128] {        
         let mut out_buf: [f32; 128] = [0.0; 128];
         self.now = stream_time;

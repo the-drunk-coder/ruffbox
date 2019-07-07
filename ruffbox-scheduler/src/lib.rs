@@ -13,8 +13,14 @@ macro_rules! log {
 
 #[wasm_bindgen]
 pub struct Scheduler {
+    audio_start_time: f64,
+    browser_start_time: f64,
+    audio_logical_time: f64,
+    browser_logical_time: f64,
+    next_schedule_time: f64,
+    lookahead: f64, // in seconds
     running: bool,
-    tempo: i32,
+    tempo: f64, // currently just the duration of a 16th note ... 
     event_idx: usize,
     event_sequence: Vec<String>,
 }
@@ -23,8 +29,14 @@ pub struct Scheduler {
 impl Scheduler {
     pub fn new() -> Self {
         Scheduler{
+            audio_start_time: 0.0,
+            browser_start_time: 0.0,
+            audio_logical_time: 0.0,
+            browser_logical_time: 0.0,
+            next_schedule_time: 0.0,
+            lookahead: 0.100,
             running: false,
-            tempo: 512,
+            tempo: 128.0,
             event_idx: 0,
             event_sequence: Vec::new(),
         }
@@ -46,11 +58,11 @@ impl Scheduler {
     }
 
     
-    pub fn scheduler_routine(&mut self) {
+    pub fn scheduler_routine(&mut self, browser_timestamp: f64) {
         if !self.running {
             return
         }
-
+                
         let next_event = &self.event_sequence[self.event_idx];
         
         if self.event_idx + 1 == self.event_sequence.len() {
@@ -58,18 +70,38 @@ impl Scheduler {
         } else {
             self.event_idx += 1;
         }
-        
-        js! {
+
+        let trigger_time = self.audio_logical_time + self.lookahead;
+        if next_event != "~" {
             // post events that will be dispatched to sampler
-            postMessage( @{next_event} );
-            // time-recursive call to scheduler function
-            self.sleep( @{self.tempo} ).then( () => self.scheduler.scheduler_routine() );
+            js! {                
+                postMessage( { sample: @{ next_event }, timestamp: @{ trigger_time } } );
+            }
+        }
+
+        // calculate drift
+        self.next_schedule_time = self.tempo - (browser_timestamp - self.browser_logical_time);
+
+        // advance timestamps
+        // audio in seconds
+        self.audio_logical_time += self.tempo / 1000.0;
+
+        // browser in milliseconds
+        self.browser_logical_time += self.tempo;
+                
+        // time-recursive call to scheduler function
+        js! {            
+            self.sleep( @{ self.next_schedule_time } ).then( () => self.scheduler.scheduler_routine( performance.now()));
         };                
     }
 
-    pub fn start(&mut self) {
+    pub fn start(&mut self, audio_timestamp: f64, browser_timestamp: f64) {
+        self.audio_start_time = audio_timestamp;
+        self.browser_start_time = browser_timestamp;
+        self.audio_logical_time = self.audio_start_time;
+        self.browser_logical_time = self.browser_start_time;
         self.running = true;
-        self.scheduler_routine();
+        self.scheduler_routine(browser_timestamp);
     }
     
     pub fn stop(&mut self) {

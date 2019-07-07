@@ -26,7 +26,7 @@ get_scheduler().then(scheduler => {
 	console.log("scheduler command: " + e.data.cmd);
 	switch (e.data.cmd) {
 	case 'start':
-	    self.scheduler.start();
+	    self.scheduler.start(e.data.timestamp, performance.now());
 	    break;
 	case 'stop':
 	    self.scheduler.stop();
@@ -35,7 +35,7 @@ get_scheduler().then(scheduler => {
 	    self.scheduler.evaluate(e.data.loop_data);
 	    break;
 	}
-    }           
+    }
 });
 
 
