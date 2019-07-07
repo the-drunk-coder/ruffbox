@@ -8,21 +8,31 @@
   <body>
     <h1>Ruffbox - Play a Beat !11</h1>
 
-    A text-based beat sequencer.
+    A text-based beat sequencer. <br/><br/>
+
+    Needs <b>Chromium/Chrome 74+</b> and <b>chrome://flags/#enable-experimental-web-platform-features</b> enabled!
     
-    <h2> Scriptable Sequencer </h2>
+    <h2> Scriptable Sequencer </h2>    
     <div>
-      <textarea id="code_input" style="float: left; width:400px; height:300px; vertical-align:top; margin-right: 0px; padding-right: 0px;">
+      <textarea id="code_input" style="float: left; width:400px; height:300px; vertical-align:top; margin-right: 20px; padding-right: 0px;">
 bd ~ ~ ~ bd ~ ~ ~ bd ~ ~ ~ bd ~ ~ ~
 ~ ~ hh ~ ~ ~ hh ~ ~ ~ hh ~ ~ ~ hh ~
 ~ ~ ~ ~ sn ~ ~ ~ ~ ~ ~ ~ sn ~ ~ ~ 
 ~ ~ casio ~ ~ ~ casio ~ ~ casio ~ ~ ~
       </textarea>
+      
       <div>
 	<webaudio-switch id="evaluate-loop" defval="0" value="0" type="kick">Evaluate</webaudio-switch> (Ctrl + Return)<br/> 
 	<webaudio-switch id="start-scheduler" defval="0" value="0" type="toggle">Start/Stop</webaudio-switch> (Ctrl + .)
       </div>
-    </div>
+      <br/>
+      <b>Syntax:</b> Each symbol is a 16th note. <br/><br/>      
+      bd = bassdrum<br/>
+      sn = snare <br/>
+      casio = beep <br/>
+      hh = hi-hat <br/>
+      ~ = silence <br/>     
+</div>
     
     <div style="clear:left; padding-top: 10px;">      
       <h2> Manual Triggers (for testing) </h2>      
