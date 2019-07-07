@@ -23,8 +23,10 @@ bd ~ ~ ~ bd ~ ~ ~ bd ~ ~ ~ bd ~ ~ ~
       
       <div>
 	<webaudio-switch id="evaluate-loop" defval="0" value="0" type="kick">Evaluate</webaudio-switch> (Ctrl + Return)<br/> 
-	<webaudio-switch id="start-scheduler" defval="0" value="0" type="toggle">Start/Stop</webaudio-switch> (Ctrl + .)
+	<webaudio-switch id="start-scheduler" defval="0" value="0" type="toggle">Start/Stop</webaudio-switch> (Ctrl + .) <br/><br/>
+	<b>Tempo:</b>  <input type="number" id="tempo" value="128" style="width:50px"> (milliseconds per 16th, on next eval)<br/>
       </div>
+      
       <br/>
       <b>Syntax:</b> Each symbol is a 16th note, each line is a loop! <br/><br/>      
       bd = bassdrum<br/>
@@ -32,7 +34,7 @@ bd ~ ~ ~ bd ~ ~ ~ bd ~ ~ ~ bd ~ ~ ~
       casio = beep <br/>
       hh = hi-hat <br/>
       ~ = silence <br/>     
-</div>
+    </div>
     
     <div style="clear:left; padding-top: 10px;">      
       <h2> Manual Triggers (for testing) </h2>      

@@ -170,4 +170,8 @@ impl Scheduler {
     pub fn stop(&mut self) {
         self.running = false;
     }
+
+    pub fn set_tempo(&mut self, tempo: f64) {
+        self.tempo = tempo;
+    }
 }

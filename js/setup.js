@@ -72,6 +72,7 @@ if (ctx.audioWorklet === undefined) {
 	    ///////////////////////////
 
 	    var running = false;
+	    var tempo = document.getElementById('tempo').value
 	    
 	    // manual triggers
 	    const bdTrig = document.getElementById('bassdrum-trigger')
@@ -94,6 +95,10 @@ if (ctx.audioWorklet === undefined) {
 		    if(ctx.state === "suspended"){
 			ctx.resume();
 		    }
+		    if(!(document.getElementById('tempo').value === tempo)){
+			tempo = document.getElementById('tempo').value;
+			scheduler.postMessage({ cmd: 'set_tempo' , tempo: tempo });
+		    }
 		    scheduler.postMessage({ cmd: 'evaluate_loop' , loop_data: document.getElementById('code_input').value });
 		    scheduler.postMessage({ cmd: 'start', timestamp: ctx.currentTime });
 		    running = true;
@@ -106,6 +111,11 @@ if (ctx.audioWorklet === undefined) {
 	    const evalLoop = document.getElementById('evaluate-loop')
 	    evalLoop.addEventListener('change', e => {				
 		if (e.target.value === 1) {
+		    console.log(document.getElementById('tempo').value)
+		    if(!(document.getElementById('tempo').value === tempo)){
+			tempo = document.getElementById('tempo').value;
+			scheduler.postMessage({ cmd: 'set_tempo' , tempo: tempo });
+		    }
 		    scheduler.postMessage({ cmd: 'evaluate_loop' , loop_data: document.getElementById('code_input').value });
 		} 
 	    })
@@ -117,12 +127,16 @@ if (ctx.audioWorklet === undefined) {
 	    window.onkeydown = function(e) {
 		var key = e.keyCode ? e.keyCode : e.which;
 		if(e.ctrlKey && key == 13) {
+		    if(!(document.getElementById('tempo').value === tempo)){
+			tempo = document.getElementById('tempo').value;
+			scheduler.postMessage({ cmd: 'set_tempo' , tempo: tempo });
+		    }
 		    scheduler.postMessage({ cmd: 'evaluate_loop' , loop_data: document.getElementById('code_input').value });
 		} else if(e.ctrlKey && key == 190) {
 		    if(!running){
 			if(ctx.state === "suspended"){
 			    ctx.resume();
-			}
+			}			
 			scheduler.postMessage({ cmd: 'evaluate_loop' , loop_data: document.getElementById('code_input').value });
 			scheduler.postMessage({ cmd: 'start', timestamp: ctx.currentTime });
 			document.getElementById('start-scheduler').value = 1;
@@ -131,7 +145,7 @@ if (ctx.audioWorklet === undefined) {
 			scheduler.postMessage({ cmd: 'stop' });			
 			running = false;
 			document.getElementById('start-scheduler').value = 0;
-		    }		    
+		    }
 		}
 	    }
 	})   

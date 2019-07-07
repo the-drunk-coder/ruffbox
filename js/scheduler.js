@@ -34,6 +34,9 @@ get_scheduler().then(scheduler => {
 	case 'evaluate_loop':
 	    self.scheduler.evaluate(e.data.loop_data);
 	    break;
+	case 'set_tempo':
+	    self.scheduler.set_tempo(e.data.tempo);
+	    break;
 	}
     }
 });
