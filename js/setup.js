@@ -92,6 +92,7 @@ if (ctx.audioWorklet === undefined) {
 		    if(ctx.state === "suspended"){
 			ctx.resume();
 		    }
+		    scheduler.postMessage({ cmd: 'evaluate_loop' , loop_data: document.getElementById('code_input').value });
 		    scheduler.postMessage({ cmd: 'start', timestamp: ctx.currentTime });		    
 		} else {
 		    scheduler.postMessage({ cmd: 'stop' });
