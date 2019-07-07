@@ -57,12 +57,11 @@ impl Scheduler {
         }        
     }
 
-    
-    pub fn scheduler_routine(&mut self, browser_timestamp: f64) {
-        if !self.running {
+    fn generate_and_send_events(&mut self) {
+        if self.event_sequence.is_empty() {
             return
         }
-                
+        
         let next_event = &self.event_sequence[self.event_idx];
         
         if self.event_idx + 1 == self.event_sequence.len() {
@@ -72,12 +71,21 @@ impl Scheduler {
         }
 
         let trigger_time = self.audio_logical_time + self.lookahead;
+        
         if next_event != "~" {
             // post events that will be dispatched to sampler
             js! {                
                 postMessage( { sample: @{ next_event }, timestamp: @{ trigger_time } } );
             }
         }
+    }
+    
+    pub fn scheduler_routine(&mut self, browser_timestamp: f64) {
+        if !self.running {
+            return
+        }
+                
+        self.generate_and_send_events();
 
         // calculate drift
         self.next_schedule_time = self.tempo - (browser_timestamp - self.browser_logical_time);
