@@ -7,13 +7,13 @@ async function get_scheduler() {
     // wasm to be loaded.    
     
     await init();
-
+    
     return Scheduler.new();	  
 }
 
 // not precise, just for testing purposes ...
 function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 self.sleep = sleep;

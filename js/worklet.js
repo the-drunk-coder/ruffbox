@@ -96,7 +96,8 @@ class RuffboxProcessor extends AudioWorkletProcessor {
 	}
 	
 	let output = outputs[0];
-	this._wasm.exports.process(this._outPtr_l, this._outPtr_r, this._size)
+
+	this._wasm.exports.process(this._outPtr_l, this._outPtr_r, this._size, currentTime);
 	output[0].set(this._outBuf_l)
 	output[1].set(this._outBuf_r)
 

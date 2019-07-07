@@ -20,14 +20,14 @@ lazy_static! {
 }
 
 #[no_mangle]
-pub extern "C" fn process(out_ptr_l: *mut f32, out_ptr_r: *mut f32, size: usize) {
+pub extern "C" fn process(out_ptr_l: *mut f32, out_ptr_r: *mut f32, size: usize, stream_time: f64) {
     let mut ruff = RUFF.lock().unwrap();
 
     let out_buf_l: &mut [f32] = unsafe { std::slice::from_raw_parts_mut(out_ptr_l, size)};
     let out_buf_r: &mut [f32] = unsafe { std::slice::from_raw_parts_mut(out_ptr_r, size)};
 
     // mono for now ... 
-    let out = ruff.process();
+    let out = ruff.process(stream_time);
     for i in 0..128 {
         out_buf_l[i] = out[i];
         out_buf_r[i] = out[i];
@@ -36,8 +36,9 @@ pub extern "C" fn process(out_ptr_l: *mut f32, out_ptr_r: *mut f32, size: usize)
 
 #[no_mangle]
 pub extern "C" fn trigger(sample_number: usize) {
-    let mut ruff = RUFF.lock().unwrap();    
-    ruff.trigger(sample_number);
+    let mut ruff = RUFF.lock().unwrap();
+    //let now = ruff.get_now();
+    ruff.trigger(sample_number, 0.0);
 }
 
 #[no_mangle]
