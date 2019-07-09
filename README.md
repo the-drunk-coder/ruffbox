@@ -13,3 +13,53 @@ It has three parts that communicate over message-passing:
 * the *ruffbox-sampler*, a sample player that runs inside an *AudioWorkletProcessor*
 * the *ruffbox-scheduler*, a seqeunce generator that runs in a *Web Worker* thread
 * the user interaction part, running in the main thread
+
+### Challenges & Development History
+
+Starting to explore the possibilities of Rust and WebAssembly for web audio, I first of all stumbled over this project:
+https://github.com/reprimande/wasm-audioworklet-synth. 
+
+It gives the basic outline on how to load a WASM module in an AudioWorkletProcessor. For whatever reason, as of 2019 it's not
+possible to load a module inside the WorkletProcessor directly, so you have to send the raw binary to the Worklet using its message 
+port. 
+
+The synth project is lacking two things, though. I'm more of a sample user than a synth user, so in the long term, sample
+playback would be nice. The synth project was also lacking precise scheduling, which is indispensable when making any kind
+of rhythmic music. 
+
+The basic sample playback part was relatively easy: https://github.com/the-drunk-coder/wasm-loop-player. Samples can be loaded 
+the same way as the WASM module, fetching them in the main thread and posting them to the audio worklet using the message port.
+A challenge here was to provide reliable buffer allocation. Somehow the buffers get neutered easily.
+
+The next challenge was the scheduling part. The original idea was to write as much code as possible in Rust, but as of 2019, 
+WASM threads aren't available yet, so I didn't get around using a web worker thread. The experimental module web worker allows you to
+import a WASM module (this time generated using `wasm-bindgen`) directly in the worker. 
+
+Now what's needed is some way to achieve precise scheduling. The sample player was modified in a way so that it allows to schedule events
+to a time point in the future. That way, events can be given a timestamp at which they'll be executed, inspired by the way OSC bundles are timestamped.
+
+The scheduling uses a temporal recursion loop. As the web worker thread doesn't allow for precise scheduling. To call the next scheduling iteration, an ad-hoc sleep function is called using `stdweb`'s `js!` macro:
+
+```javascript
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+```
+
+```rust
+js! {            
+    self.sleep( @{ self.next_schedule_time } ).then( () => self.scheduler.scheduler_routine( performance.now()));
+}; 
+```
+
+That of course means that the next scheduler iteration might be called a couple of milliseconds late. To compensate for that, 
+the scheduler runs ahead of time in relation to the audio thread. It keeps track of the logical time (when the event should have happened), and sends out the event to the sampler with a fixed delay, thus compensating for the imprecision. 
+
+The actual message passing is the other spot where I didn't find a solution in pure Rust yet. The worker's `postMessage` macro 
+is called using `stdweb`'s `js!` macro:
+
+```rust
+js! {                
+   postMessage( { sample: @{ next_event }, timestamp: @{ trigger_time } } );
+}
+```
