@@ -11,17 +11,20 @@ async function get_scheduler() {
     return Scheduler.new();	  
 }
 
-// not precise, just for testing purposes ...
+// This ad-hoc way of implementing a sleep function isn't
+// precise enough for musical timing, so we need some way
+// to compensate for it in the scheduler (see there).
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 self.sleep = sleep;
 
+// fetch the scheduler instance
 get_scheduler().then(scheduler => {
     self.scheduler = scheduler;
 
-    // now that we have a scheduler, set scheduler controls ...
+    // now that we have a scheduler, set scheduler controls
     self.onmessage = function(e) {
 	console.log("scheduler command: " + e.data.cmd);
 	switch (e.data.cmd) {

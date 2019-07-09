@@ -11,12 +11,15 @@ macro_rules! log {
     }
 }
 
+/// A simple event sequence represented by a vector of strings
 struct EventSequence {
     events: Vec<String>,
     idx: usize,
 }
 
 impl EventSequence {
+
+    /// Create an event sequence from a string.
     pub fn from_string(input_line: String) -> Self {
         let mut seq = Vec::new();
         
@@ -32,6 +35,7 @@ impl EventSequence {
         }
     }
 
+    /// Update an existing sequence from a string.
     pub fn update_sequence(&mut self, input_line: String) {
         self.events.clear();
 
@@ -46,6 +50,7 @@ impl EventSequence {
         }
     }
 
+    /// get the next event in the sequence
     pub fn get_next_event(&mut self) -> &String {
         if self.events.is_empty() {
             "~".to_string();
@@ -63,10 +68,13 @@ impl EventSequence {
     }
 }
 
+/// A simple time-recursion event scheduler running at a fixed time interval.
 #[wasm_bindgen]
 pub struct Scheduler {
+    /// time this scheduler was started (AudioContext.currentTime)
     audio_start_time: f64,
-    browser_start_time: f64,
+    /// time this scheduler was started (performance.now())
+    browser_start_time: f64,    
     audio_logical_time: f64,
     browser_logical_time: f64,
     next_schedule_time: f64,
@@ -92,6 +100,7 @@ impl Scheduler {
         }
     }
 
+    /// Evaluate an input string, turn it into a series of event sequences.
     pub fn evaluate(&mut self, input: Option<String>) {        
         match input {
             Some(all_lines) => {
@@ -115,7 +124,7 @@ impl Scheduler {
         }
     }    
 
-
+    /// Fetch all events from the event sequences, post them to main thread
     fn generate_and_send_events(&mut self) {
         if self.event_sequences.is_empty() {
             return
@@ -133,31 +142,38 @@ impl Scheduler {
             }
         }
     }
-    
+
+    /// The main scheduler recursion.
     pub fn scheduler_routine(&mut self, browser_timestamp: f64) {
         if !self.running {
             return
         }
-        
+
+        // Get current events and post them to main thread.
         self.generate_and_send_events();
 
-        // calculate drift, correct timing ...
+        // Calculate drift, correct timing.
+        // The time at which this is called is most likely later, but never earlier,
+        // than the time it SHOULD have been called at (self.browser_logical_time).
+        // To compensate for the delay, we schedule the next call a bit earlier
+        // than the actual interval.
         self.next_schedule_time = self.tempo - (browser_timestamp - self.browser_logical_time);
 
-        // advance timestamps
-        // audio in seconds
+        // Advance timestamps!
+        // audio time in seconds
         self.audio_logical_time += self.tempo / 1000.0;
 
-        // browser in milliseconds
+        // browser time in milliseconds
         self.browser_logical_time += self.tempo;
         
-        // time-recursive call to scheduler function
+        // Time-recursive call to scheduler function.
         // i'm looking forward to the day I can do that in pure rust ... 
         js! {            
             self.sleep( @{ self.next_schedule_time } ).then( () => self.scheduler.scheduler_routine( performance.now()));
         };                
     }
 
+    /// Start this scheduler.
     pub fn start(&mut self, audio_timestamp: f64, browser_timestamp: f64) {
         self.audio_start_time = audio_timestamp;
         self.browser_start_time = browser_timestamp;
@@ -166,11 +182,13 @@ impl Scheduler {
         self.running = true;
         self.scheduler_routine(browser_timestamp);
     }
-    
+
+    /// Stop this scheduler.
     pub fn stop(&mut self) {
         self.running = false;
     }
 
+    /// Set tick duration.
     pub fn set_tempo(&mut self, tempo: f64) {
         self.tempo = tempo;
     }
