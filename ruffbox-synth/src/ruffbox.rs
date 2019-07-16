@@ -5,8 +5,8 @@ use std::cmp::Ordering;
 use std::sync::Arc;
 
 use crate::ruffbox::synth::Source;
-use crate::ruffbox::synth::Sampler;
-use crate::ruffbox::synth::SineOsc;
+use crate::ruffbox::synth::sampler::Sampler;
+use crate::ruffbox::synth::oscillators::SineOsc;
 
 /// timed event, to be created in the trigger method, then 
 /// sent to the event queue to be either dispatched directly
