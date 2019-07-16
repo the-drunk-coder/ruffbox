@@ -9,6 +9,7 @@ use std::sync::Arc;
 
 use crate::ruffbox::sampler::Source;
 use crate::ruffbox::sampler::Sampler;
+use crate::ruffbox::sampler::SineOsc;
 
 /// timed event, to be created in the trigger method, then 
 /// sent to the event queue to be either dispatched directly
@@ -18,21 +19,26 @@ struct ScheduledEvent {
     sampler: Box<Source + Send>,
 }
 
-/// ScheduledEvent implements Ord so the pending events queue
-/// can be ordered by the timestamps ...
+
 impl Ord for ScheduledEvent {
+    /// ScheduledEvent implements Ord so the pending events queue
+    /// can be ordered by the timestamps ...
     fn cmp(&self, other: &Self) -> Ordering {
         self.timestamp.partial_cmp(&other.timestamp).unwrap()
     }
 }
 
 impl PartialOrd for ScheduledEvent {
+    /// ScheduledEvent implements PartialOrd so the pending events queue
+    /// can be ordered by the timestamps ...
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
 impl PartialEq for ScheduledEvent {
+    /// ScheduledEvent implements PartialEq so the pending events queue
+    /// can be ordered by the timestamps ...
     fn eq(&self, other: &Self) -> bool {
         self.timestamp == other.timestamp
     }
@@ -40,7 +46,7 @@ impl PartialEq for ScheduledEvent {
 
 impl Eq for ScheduledEvent {}
 
-/// constructor implementation
+// constructor implementation
 impl ScheduledEvent {
     pub fn new(ts: f64, sam: Box<Source + Send>) -> Self {
         ScheduledEvent {
@@ -131,7 +137,11 @@ impl Ruffbox {
     /// triggers a sampler for buffer reference or a synth
     pub fn trigger(&mut self, temp: usize, timestamp: f64) {
         // add check if it actually exists !
-        let scheduled_event = ScheduledEvent::new(timestamp, Box::new(Sampler::with_buffer_ref(&self.buffers[temp])));
+        let scheduled_event = match temp {
+            555 => ScheduledEvent::new(timestamp, Box::new(SineOsc::new(440.0, 0.2, 0.3, 44100.0))),
+            _ => ScheduledEvent::new(timestamp, Box::new(Sampler::with_buffer_ref(&self.buffers[temp]))),
+        };
+        
         self.new_instances_q_send.send(scheduled_event).unwrap();
     }
 

@@ -88,6 +88,12 @@ class RuffboxProcessor extends AudioWorkletProcessor {
 		}
 	    }
 	}
+
+	if(!this._sampleMapping) {
+	    this._sampleMapping = {};
+	}
+
+	this._sampleMapping['sine'] = 555;
     }
     
     process(inputs, outputs, parameters) {
