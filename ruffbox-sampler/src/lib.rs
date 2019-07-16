@@ -44,7 +44,7 @@ pub extern "C" fn trigger(sample_number: usize, timestamp: f64) {
 pub extern "C" fn load(sample_ptr: *mut f32, size: usize) -> usize {
     let mut ruff = RUFF.lock().unwrap();
     let in_buf: &mut [f32] = unsafe { std::slice::from_raw_parts_mut(sample_ptr, size)};
-    ruff.load(in_buf)
+    ruff.load_sample(in_buf)
 }
 
 
