@@ -94,7 +94,10 @@ impl Ruffbox {
         // add new instances
         for new_event in self.new_instances_q_rec.try_iter() {
             if new_event.timestamp == 0.0 {
+                self.running_instances.push(new_event.sampler);                
+            } else if new_event.timestamp <= self.now { // late events 
                 self.running_instances.push(new_event.sampler);
+                // how to send out a late message ??
             } else  {
                 self.pending_events.push(new_event);
             }            
@@ -134,7 +137,7 @@ impl Ruffbox {
         out_buf
     }
 
-    /// triggers a sampler for buffer reference or a synth
+    /// triggers a synth for buffer reference or a synth
     pub fn trigger(&mut self, temp: usize, timestamp: f64) {
         // add check if it actually exists !
         let scheduled_event = match temp {
@@ -146,7 +149,7 @@ impl Ruffbox {
     }
 
     /// loads a sample and returns the assigned buffer number
-    pub fn load(&mut self, samples:&[f32]) -> usize {
+    pub fn load_sample(&mut self, samples:&[f32]) -> usize {
         self.buffers.push(Arc::new(samples.to_vec()));
         self.buffers.len() - 1
     }     
