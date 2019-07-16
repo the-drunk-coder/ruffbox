@@ -1,7 +1,7 @@
 #!/bin/sh -e
 
 echo "compile sampler to wasm"
-cd ruffbox-sampler
+cd ruffbox-synth
 cargo build --target wasm32-unknown-unknown --release
 
 echo "copy"

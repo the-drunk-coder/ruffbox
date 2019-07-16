@@ -24,7 +24,7 @@ if (ctx.audioWorklet === undefined) {
 	    // the worklet, where it'll be instantiated.
 	    // unfortunately, as of now, the audio worklet doesn't allow fetching
 	    // the WASM module directly
-	    fetch('wasm/ruffbox_sampler.wasm?t=' + new Date().getTime())
+	    fetch('wasm/ruffbox_synth.wasm?t=' + new Date().getTime())
 		.then(r => r.arrayBuffer())
 		.then(r => n.port.postMessage({ type: 'loadWasm', data: r }))
 

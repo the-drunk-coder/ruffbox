@@ -1,21 +1,20 @@
-pub mod sampler;
+pub mod synth;
 
 use std::cmp::Ordering;
 
 use std::sync::Arc;
 
-use crate::ruffbox::sampler::Source;
-use crate::ruffbox::sampler::Sampler;
-use crate::ruffbox::sampler::SineOsc;
+use crate::ruffbox::synth::Source;
+use crate::ruffbox::synth::Sampler;
+use crate::ruffbox::synth::SineOsc;
 
 /// timed event, to be created in the trigger method, then 
 /// sent to the event queue to be either dispatched directly
 /// or pushed to the pending queue ...
 struct ScheduledEvent {
     timestamp: f64,
-    sampler: Box<dyn Source + Send>,
+    source: Box<dyn Source + Send>,
 }
-
 
 impl Ord for ScheduledEvent {
     /// ScheduledEvent implements Ord so the pending events queue
@@ -45,10 +44,10 @@ impl Eq for ScheduledEvent {}
 
 // constructor implementation
 impl ScheduledEvent {
-    pub fn new(ts: f64, sam: Box<dyn Source + Send>) -> Self {
+    pub fn new(ts: f64, src: Box<dyn Source + Send>) -> Self {
         ScheduledEvent {
             timestamp: ts,
-            sampler: sam,
+            source: src,
         }
     }
 }
@@ -91,9 +90,9 @@ impl Ruffbox {
         // add new instances
         for new_event in self.new_instances_q_rec.try_iter() {
             if new_event.timestamp == 0.0 {
-                self.running_instances.push(new_event.sampler);                
+                self.running_instances.push(new_event.source);                
             } else if new_event.timestamp <= self.now { // late events 
-                self.running_instances.push(new_event.sampler);
+                self.running_instances.push(new_event.source);
                 // how to send out a late message ??
             } else  {
                 self.pending_events.push(new_event);
@@ -111,15 +110,15 @@ impl Ruffbox {
 
             // calculate precise timing
             let sample_offset = (current_event.timestamp - stream_time) / self.sec_per_sample;           
-            let block = current_event.sampler.get_next_block(sample_offset as usize);
+            let block = current_event.source.get_next_block(sample_offset as usize);
             for s in 0..128 {
                 out_buf[s] += block[s];
             }
 
             // if length of sample event is longer than the rest of the block,
             // add to running instances
-            if !current_event.sampler.is_finished() {
-                self.running_instances.push(current_event.sampler);
+            if !current_event.source.is_finished() {
+                self.running_instances.push(current_event.source);
             }
         }
         
