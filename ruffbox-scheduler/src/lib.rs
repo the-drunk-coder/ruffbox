@@ -103,10 +103,9 @@ impl Scheduler {
     /// Evaluate an input string, turn it into a series of event sequences.
     pub fn evaluate(&mut self, input: Option<String>) {        
         match input {
-            Some(all_lines) => {
-
+            Some(all_lines) => {                                               
                 let mut seq_idx = 0;
-                
+
                 for line in all_lines.lines() {
                     
                     if !line.trim().is_empty() {
@@ -117,6 +116,10 @@ impl Scheduler {
                         }
                         seq_idx += 1;                        
                     }
+                }
+                // check if we need to remove some sequnces because the number of lines got reduced ...
+                if seq_idx < self.event_sequences.len() {
+                    self.event_sequences.truncate(seq_idx);
                 }
             }
             
