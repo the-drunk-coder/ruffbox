@@ -1,7 +1,5 @@
 pub mod sampler;
 
-use crossbeam::channel::*;
-
 use std::cmp::Ordering;
 
 use std::sync::Arc;
@@ -15,7 +13,7 @@ use crate::ruffbox::sampler::SineOsc;
 /// or pushed to the pending queue ...
 struct ScheduledEvent {
     timestamp: f64,
-    sampler: Box<Source + Send>,
+    sampler: Box<dyn Source + Send>,
 }
 
 
@@ -47,7 +45,7 @@ impl Eq for ScheduledEvent {}
 
 // constructor implementation
 impl ScheduledEvent {
-    pub fn new(ts: f64, sam: Box<Source + Send>) -> Self {
+    pub fn new(ts: f64, sam: Box<dyn Source + Send>) -> Self {
         ScheduledEvent {
             timestamp: ts,
             sampler: sam,
@@ -57,7 +55,7 @@ impl ScheduledEvent {
 
 /// the main synth instance
 pub struct Ruffbox {
-    running_instances: Vec<Box<Source + Send>>,
+    running_instances: Vec<Box<dyn Source + Send>>,
     pending_events: Vec<ScheduledEvent>,
     buffers: Vec<Arc<Vec<f32>>>,
     new_instances_q_send: crossbeam::channel::Sender<ScheduledEvent>,
