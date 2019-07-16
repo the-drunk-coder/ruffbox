@@ -5,16 +5,21 @@ use std::sync::mpsc;
 
 use std::cmp::Ordering;
 
-
 use std::sync::Arc;
 
-use sampler::*;
+use crate::ruffbox::sampler::Source;
+use crate::ruffbox::sampler::Sampler;
 
+/// timed event, to be created in the trigger method, then 
+/// sent to the event queue to be either dispatched directly
+/// or pushed to the pending queue ...
 struct ScheduledEvent {
     timestamp: f64,
-    sampler: Sampler,
+    sampler: Box<Source + Send>,
 }
 
+/// ScheduledEvent implements Ord so the pending events queue
+/// can be ordered by the timestamps ...
 impl Ord for ScheduledEvent {
     fn cmp(&self, other: &Self) -> Ordering {
         self.timestamp.partial_cmp(&other.timestamp).unwrap()
@@ -35,9 +40,9 @@ impl PartialEq for ScheduledEvent {
 
 impl Eq for ScheduledEvent {}
 
-// constructor implementation
+/// constructor implementation
 impl ScheduledEvent {
-    pub fn new(ts: f64, sam: Sampler) -> Self {
+    pub fn new(ts: f64, sam: Box<Source + Send>) -> Self {
         ScheduledEvent {
             timestamp: ts,
             sampler: sam,
@@ -45,8 +50,9 @@ impl ScheduledEvent {
     }
 }
 
+/// the main synth instance
 pub struct Ruffbox {
-    running_instances: Vec<Sampler>,
+    running_instances: Vec<Box<Source + Send>>,
     pending_events: Vec<ScheduledEvent>,
     buffers: Vec<Arc<Vec<f32>>>,
     new_instances_q_send: Sender<ScheduledEvent>,
@@ -77,7 +83,7 @@ impl Ruffbox {
         self.now = stream_time;
         
         // remove finished instances ...
-        self.running_instances.retain( |instance| match &instance.state { SamplerState::Finished => false, _ => true });
+        self.running_instances.retain( |instance| !&instance.is_finished());
 
         // add new instances
         for new_event in self.new_instances_q_rec.try_iter() {
@@ -89,7 +95,6 @@ impl Ruffbox {
         }
 
         // sort new events by timestamp, order of already sorted elements doesn't matter
-
         self.pending_events.sort_unstable_by(|a, b| b.cmp(a));
         let block_end = stream_time + self.block_duration;
         
@@ -107,9 +112,8 @@ impl Ruffbox {
 
             // if length of sample event is longer than the rest of the block,
             // add to running instances
-            match current_event.sampler.state {
-                SamplerState::Fresh => self.running_instances.push(current_event.sampler),
-                _ => (),                
+            if !current_event.sampler.is_finished() {
+                self.running_instances.push(current_event.sampler);
             }
         }
         
@@ -124,12 +128,14 @@ impl Ruffbox {
         out_buf
     }
 
+    /// triggers a sampler for buffer reference or a synth
     pub fn trigger(&mut self, temp: usize, timestamp: f64) {
         // add check if it actually exists !
-        let scheduled_event = ScheduledEvent::new(timestamp, Sampler::with_buffer_ref(&self.buffers[temp]));                    
+        let scheduled_event = ScheduledEvent::new(timestamp, Box::new(Sampler::with_buffer_ref(&self.buffers[temp])));
         self.new_instances_q_send.send(scheduled_event).unwrap();
     }
 
+    /// loads a sample and returns the assigned buffer number
     pub fn load(&mut self, samples:&[f32]) -> usize {
         self.buffers.push(Arc::new(samples.to_vec()));
         self.buffers.len() - 1

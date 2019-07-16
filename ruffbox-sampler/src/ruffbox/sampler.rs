@@ -6,6 +6,12 @@ pub enum SamplerState {
     Finished
 }
 
+pub trait Source {
+    fn finish(&mut self);
+    fn is_finished(&self) -> bool;
+    fn get_next_block(&mut self, start_sample: usize) -> [f32; 128];
+}
+
 /**
  * a very simple sample player ...
  */
@@ -15,8 +21,7 @@ pub struct Sampler {
     pub state: SamplerState,
 }
 
-impl Sampler {
-    
+impl Sampler {    
     pub fn with_buffer_ref(buf: &Arc<Vec<f32>>) -> Sampler {        
         Sampler {
             index: 0,
@@ -24,10 +29,23 @@ impl Sampler {
             state: SamplerState::Fresh,
         }
     }
+}
 
-    pub fn get_next_block(&mut self, start_sample: usize) -> [f32; 128] {
+impl Source for Sampler {
+    fn finish(&mut self) {
+        self.state = SamplerState::Finished;
+    }
+
+    fn is_finished(&self) -> bool {
+        match self.state {
+            SamplerState::Finished => true,
+            _ => false,
+        }
+    }
+    
+    fn get_next_block(&mut self, start_sample: usize) -> [f32; 128] {
         let mut out_buf: [f32; 128] = [0.0; 128];
-
+        
         for i in start_sample..128 {            
             out_buf[i] = self.buffer_ref[self.index];
             
