@@ -11,5 +11,5 @@ crate-type = ["cdylib"]
 num = "0.2.0"
 lazy_static = "1.2.0"
 wee_alloc = { version = "0.4.2", optional = true }
-
+crossbeam = "0.7.0"
 

@@ -1,7 +1,6 @@
 pub mod sampler;
 
-use std::sync::mpsc::{Sender, Receiver};
-use std::sync::mpsc;
+use crossbeam::channel::*;
 
 use std::cmp::Ordering;
 
@@ -61,8 +60,8 @@ pub struct Ruffbox {
     running_instances: Vec<Box<Source + Send>>,
     pending_events: Vec<ScheduledEvent>,
     buffers: Vec<Arc<Vec<f32>>>,
-    new_instances_q_send: Sender<ScheduledEvent>,
-    new_instances_q_rec: Receiver<ScheduledEvent>,
+    new_instances_q_send: crossbeam::channel::Sender<ScheduledEvent>,
+    new_instances_q_rec: crossbeam::channel::Receiver<ScheduledEvent>,
     block_duration: f64,
     sec_per_sample: f64,
     now: f64,
@@ -70,7 +69,7 @@ pub struct Ruffbox {
 
 impl Ruffbox {
     pub fn new() -> Ruffbox {
-        let (tx, rx): (Sender<ScheduledEvent>, Receiver<ScheduledEvent>) = mpsc::channel();
+        let (tx, rx): (crossbeam::channel::Sender<ScheduledEvent>, crossbeam::channel::Receiver<ScheduledEvent>) = crossbeam::channel::bounded(1000);
         Ruffbox {            
             running_instances: Vec::with_capacity(600),
             pending_events: Vec::with_capacity(600),
@@ -170,8 +169,8 @@ mod tests {
         let sample1 = [0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
         let sample2 = [0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0];
         
-        let bnum1 = ruff.load(&sample1);
-        let bnum2 = ruff.load(&sample2);
+        let bnum1 = ruff.load_sample(&sample1);
+        let bnum2 = ruff.load_sample(&sample2);
         
         ruff.process(0.0);
         
@@ -195,8 +194,8 @@ mod tests {
         let sample1 = [0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
         let sample2 = [0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0];
         
-        let bnum1 = ruff.load(&sample1);
-        let bnum2 = ruff.load(&sample2);
+        let bnum1 = ruff.load_sample(&sample1);
+        let bnum2 = ruff.load_sample(&sample2);
 
         // schedule two samples ahead, to the same point in time
         ruff.trigger(bnum1, 0.291);
@@ -227,8 +226,8 @@ mod tests {
         let sample1 = [0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
         let sample2 = [0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0];
         
-        let bnum1 = ruff.load(&sample1);
-        let bnum2 = ruff.load(&sample2);
+        let bnum1 = ruff.load_sample(&sample1);
+        let bnum2 = ruff.load_sample(&sample2);
 
         // schedule two samples ahead, so they should overlap by five ticks
         ruff.trigger(bnum1, 0.291);
@@ -267,8 +266,8 @@ mod tests {
         let sample1 = [0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
         let sample2 = [0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0];
         
-        let bnum1 = ruff.load(&sample1);
-        let bnum2 = ruff.load(&sample2);
+        let bnum1 = ruff.load_sample(&sample1);
+        let bnum2 = ruff.load_sample(&sample2);
 
         // schedule two samples ahead, so they should  occur in different blocks
         // first sample should appear in block 100
