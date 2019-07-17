@@ -5,8 +5,8 @@ use crossbeam::channel::Sender;
 use crossbeam::channel::Receiver;
 use crossbeam::atomic::AtomicCell;
 
-// ccl for the fast concurrent hashmap
-use ccl::dhashmap::DHashMap;
+
+use std::collections::HashMap;
 
 use std::cmp::Ordering;
 use std::sync::Arc;
@@ -70,7 +70,7 @@ pub struct Ruffbox {
     running_instances: Vec<Box<dyn Source + Send>>,
     pending_events: Vec<ScheduledEvent>,
     buffers: Vec<Arc<Vec<f32>>>,
-    prepared_instance_map: DHashMap<usize, ScheduledEvent>,
+    prepared_instance_map: HashMap<usize, ScheduledEvent>,
     instance_counter: AtomicCell<usize>,
     new_instances_q_send: crossbeam::channel::Sender<ScheduledEvent>,
     new_instances_q_rec: crossbeam::channel::Receiver<ScheduledEvent>,
@@ -86,7 +86,7 @@ impl Ruffbox {
             running_instances: Vec::with_capacity(600),
             pending_events: Vec::with_capacity(600),
             buffers: Vec::with_capacity(20),
-            prepared_instance_map: DHashMap::default(),
+            prepared_instance_map: HashMap::with_capacity(600),
             instance_counter: AtomicCell::new(0),
             new_instances_q_send: tx,
             new_instances_q_rec: rx,
@@ -165,13 +165,13 @@ impl Ruffbox {
     }
 
     pub fn set_instance_parameter(&mut self, instance_id: usize, par: SourceParameter, val: f32) {
-        self.prepared_instance_map.index_mut(instance_id).set_parameter(par, val);
+        self.prepared_instance_map.get_mut(&instance_id).unwrap().set_parameter(par, val);
     }
     
     /// triggers a synth for buffer reference or a synth
-    pub fn trigger(&mut self, instance_id: usize ) {
+    pub fn trigger(&mut self, instance_id: usize) {
         // add check if it actually exists !
-        let (_id, scheduled_event) = self.prepared_instance_map.remove(instance_id).unwrap();        
+        let scheduled_event = self.prepared_instance_map.remove(&instance_id).unwrap();        
         self.new_instances_q_send.send(scheduled_event).unwrap();
     }
 

@@ -3,6 +3,7 @@ class RuffboxProcessor extends AudioWorkletProcessor {
 	return []
     }
 
+       
     loadSample(sampleData, sampleSize, id){
 	
 	if(!this._sampleBuffers){
@@ -32,7 +33,12 @@ class RuffboxProcessor extends AudioWorkletProcessor {
         
     constructor(options) {
 	super(options)
-		
+
+	this._sourceType = Object.freeze({
+	    "Sampler" : 0,
+	    "SinOsc" : 1,
+	});
+	
 	this.port.onmessage = e => {
 	    // unfortunately, this seems to be the only way to load
 	    // the wasm module in the worklet.
@@ -83,8 +89,9 @@ class RuffboxProcessor extends AudioWorkletProcessor {
 		    this._samples.push([sampleData, sampleSize, sampleId]);
 		}
 	    } else if (e.data.type === 'trigger') {
-		if(this._wasm) {		    		    
-		    this._wasm.exports.trigger(this._sampleMapping[e.data.sample_id], e.data.timestamp);
+		if(this._wasm) {
+		    let instance_id = this._wasm.exports.prepare(this._sourceType.Sampler, e.data.timestamp, this._sampleMapping[e.data.sample_id]);
+		    this._wasm.exports.trigger(instance_id);
 		}
 	    }
 	}
@@ -92,8 +99,6 @@ class RuffboxProcessor extends AudioWorkletProcessor {
 	if(!this._sampleMapping) {
 	    this._sampleMapping = {};
 	}
-
-	this._sampleMapping['sine'] = 555;
     }
     
     process(inputs, outputs, parameters) {
