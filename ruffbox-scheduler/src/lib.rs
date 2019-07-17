@@ -136,11 +136,18 @@ impl Scheduler {
         let trigger_time = self.audio_logical_time + self.lookahead;
         
         for seq in self.event_sequences.iter_mut() {
+
             let next_event = seq.get_next_event();
+
+            let next_source_type = match next_event.as_ref() {
+                "sine" => "SinOsc",
+                _ => "Sampler",
+            };
+
             if next_event != "~" {
                 // post events that will be dispatched to sampler
                 js! {                
-                    postMessage( { sample: @{ next_event }, timestamp: @{ trigger_time } } );
+                    postMessage( { source_type: @{ next_source_type }, timestamp: @{ trigger_time }, sample_id: @{ next_event} } );
                 }
             }
         }

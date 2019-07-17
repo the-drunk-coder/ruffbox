@@ -2,8 +2,7 @@ class RuffboxProcessor extends AudioWorkletProcessor {
     static get parameterDescriptors() {
 	return []
     }
-
-       
+   
     loadSample(sampleData, sampleSize, id){
 	
 	if(!this._sampleBuffers){
@@ -34,10 +33,8 @@ class RuffboxProcessor extends AudioWorkletProcessor {
     constructor(options) {
 	super(options)
 
-	this._sourceType = Object.freeze({
-	    "Sampler" : 0,
-	    "SinOsc" : 1,
-	});
+	// representations of the internal macros ... 
+	this._sourceType = 
 	
 	this.port.onmessage = e => {
 	    // unfortunately, this seems to be the only way to load
@@ -88,9 +85,14 @@ class RuffboxProcessor extends AudioWorkletProcessor {
 		} else {
 		    this._samples.push([sampleData, sampleSize, sampleId]);
 		}
+	    } else if (e.data.type === 'sourceType') {
+		this._sourceType = e.data.content;
+	    } else if (e.data.type === 'sourceParameter') {
+		this._sourceParameter = e.data.content;
 	    } else if (e.data.type === 'trigger') {
 		if(this._wasm) {
-		    let instance_id = this._wasm.exports.prepare(this._sourceType.Sampler, e.data.timestamp, this._sampleMapping[e.data.sample_id]);
+		    let event = e.data.event;)
+		    let instance_id = this._wasm.exports.prepare(this._sourceType[event.source_type], event.timestamp, this._sampleMapping[event.sample_id]);
 		    this._wasm.exports.trigger(instance_id);
 		}
 	    }

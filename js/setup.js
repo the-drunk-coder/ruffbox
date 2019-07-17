@@ -1,3 +1,64 @@
+const sourceType = Object.freeze({
+    "Sampler" : 0,
+    "SinOsc" : 1,
+});
+
+const sourceParameter = Object.freeze({
+    "Attack" : 0,
+    "Decay" : 1,
+    "Duration" : 2,
+    "PitchFrequency" : 3,
+    "PitchNote" : 4,
+    "HighpassCutoffFrequency" : 5,
+    "HighpassQFactor" : 6,
+    "Level" : 7,
+    "LowpassCutoffFrequency" : 8,
+    "LowpassQFactor" : 9,
+    "LowpassFilterDistortion" : 10,
+    "PeakFrequency" : 11,
+    "PeakGain" : 12,
+    "PeakQFactor" : 13,
+    "Pulsewidth" : 14,
+    "PlaybackRate" : 15,
+    "PlaybackStart" : 16,
+    "PlaybackLoop" : 17,
+    "Release" : 18,
+    "ReverbMix" : 19,
+    "SampleBufferNumber" : 20,
+    "Samplerate" : 21,
+    "StereoPosition" : 22,
+    "Sustain" : 23,
+});
+
+
+const sourceParameterShortName = Object.freeze({
+    "atk" : 0,
+    "dec" : 1,
+    "dur" : 2,
+    "freq" : 3,
+    "note" : 4,
+    "hp-freq" : 5,
+    "hp-q" : 6,
+    "lvl" : 7,
+    "lp-freq" : 8,
+    "lp-q" : 9,
+    "lp-dist" : 10,
+    "pf-freq" : 11,
+    "pf-gain" : 12,
+    "pf-q" : 13,
+    "pw" : 14,
+    "rate" : 15,
+    "start" : 16,
+    "loop" : 17,
+    "rel" : 18,
+    "rev" : 19,
+    "buf" : 20,
+    "sr" : 21,
+    "pos" : 22,
+    "sus" : 23,
+});
+
+
 const ctx = new AudioContext({
     sampleRate: 44100,
     latencyHint: "interactive",
@@ -64,8 +125,15 @@ if (ctx.audioWorklet === undefined) {
 	    // set event scheduler message callback
 	    scheduler.onmessage = function(event) {
 		// dispatch to sampler module ...
-		n.port.postMessage({ type: 'trigger', sample_id: event.data.sample, timestamp: event.data.timestamp})
+		n.port.postMessage({ type: 'trigger', event: event.data })
 	    };
+
+	    ///////////////////
+	    // LOAD MAPPINGS //
+	    ///////////////////
+
+	    n.port.postMessage({ type: 'sourceType', content: sourceType});
+	    n.port.postMessage({ type: 'sourceParameter', content: sourceParameterShortName});
 	    	    
 	    ///////////////////////////
 	    // INIT CONTROL ELEMENTS //
@@ -78,14 +146,14 @@ if (ctx.audioWorklet === undefined) {
 	    const bdTrig = document.getElementById('bassdrum-trigger')
 	    bdTrig.addEventListener('change', e => {				
 		if (e.target.value === 1) {
-		    n.port.postMessage({ type: 'trigger', sample_id: 'bd', timestamp: 0.0})
+		    n.port.postMessage({ type: 'trigger', event : { source_type : "Sampler", sample_id: 'bd', timestamp: 0.0 }})
 		}
 	    })
 
 	    const snTrig = document.getElementById('snare-trigger')
 	    snTrig.addEventListener('change', e => {				
 		if (e.target.value === 1) {
-		    n.port.postMessage({ type: 'trigger', sample_id: 'sn', timestamp: 0.0})
+		    n.port.postMessage({ type: 'trigger', event : { source_type : "Sampler", sample_id: 'sn', timestamp: 0.0 }})
 		}
 	    })
 	  
