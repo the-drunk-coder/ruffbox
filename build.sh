@@ -5,7 +5,7 @@ cd ruffbox-synth
 cargo build --target wasm32-unknown-unknown --release
 
 echo "copy"
-cp target/wasm32-unknown-unknown/release/ruffbox_sampler.wasm ../wasm/
+cp target/wasm32-unknown-unknown/release/ruffbox_synth.wasm ../wasm/
 cd ..
 
 echo "compile scheduler to wasm"
