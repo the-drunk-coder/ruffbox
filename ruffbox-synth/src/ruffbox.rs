@@ -171,7 +171,7 @@ impl Ruffbox {
     /// triggers a synth for buffer reference or a synth
     pub fn trigger(&mut self, instance_id: usize ) {
         // add check if it actually exists !
-        let (id, scheduled_event) = self.prepared_instance_map.remove(instance_id).unwrap();        
+        let (_id, scheduled_event) = self.prepared_instance_map.remove(instance_id).unwrap();        
         self.new_instances_q_send.send(scheduled_event).unwrap();
     }
 
