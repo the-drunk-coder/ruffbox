@@ -6,13 +6,42 @@ pub enum SourceState {
     Finished
 }
 
-pub enum SourceParameters {
+/// a collection of common parameters
+#[allow(dead_code)]
+pub enum SourceParameter {
+    Attack,    
+    Decay,
     Duration,    
-    Frequency,
-    Samplerate
+    PitchFrequency,
+    PitchNote,
+    HighpassCutoffFrequency,
+    HighpassQFactor,
+    Level,
+    LowpassCutoffFrequency,
+    LowpassQFactor,
+    LowpassFilterDistortion,
+    PeakFrequency,
+    PeakGain,
+    PeakQFactor,
+    Pulsewidth,
+    PlaybackRate,
+    PlaybackStart,
+    PlaybackLoop,
+    Release,
+    ReverbMix,
+    SampleBufferNumber,
+    Samplerate,
+    StereoPosition,
+    Sustain,
+}
+
+pub enum SourceType {
+    Sampler,
+    SinOsc,
 }
 
 pub trait Source {
+    fn set_parameter(&mut self, par: SourceParameter, value: f32);
     fn finish(&mut self);
     fn is_finished(&self) -> bool;
     fn get_next_block(&mut self, start_sample: usize) -> [f32; 128];

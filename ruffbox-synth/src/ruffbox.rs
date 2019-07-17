@@ -1,10 +1,19 @@
 pub mod synth;
 
-use std::cmp::Ordering;
+// crossbeam for the event queue
+use crossbeam::channel::Sender;
+use crossbeam::channel::Receiver;
+use crossbeam::atomic::AtomicCell;
 
+// ccl for the fast concurrent hashmap
+use ccl::dhashmap::DHashMap;
+
+use std::cmp::Ordering;
 use std::sync::Arc;
 
 use crate::ruffbox::synth::Source;
+use crate::ruffbox::synth::SourceParameter;
+use crate::ruffbox::synth::SourceType;
 use crate::ruffbox::synth::sampler::Sampler;
 use crate::ruffbox::synth::oscillators::SineOsc;
 
@@ -50,6 +59,10 @@ impl ScheduledEvent {
             source: src,
         }
     }
+
+    pub fn set_parameter(&mut self, par: SourceParameter, value: f32) {
+        self.source.set_parameter(par, value);
+    }
 }
 
 /// the main synth instance
@@ -57,6 +70,8 @@ pub struct Ruffbox {
     running_instances: Vec<Box<dyn Source + Send>>,
     pending_events: Vec<ScheduledEvent>,
     buffers: Vec<Arc<Vec<f32>>>,
+    prepared_instance_map: DHashMap<usize, ScheduledEvent>,
+    instance_counter: AtomicCell<usize>,
     new_instances_q_send: crossbeam::channel::Sender<ScheduledEvent>,
     new_instances_q_rec: crossbeam::channel::Receiver<ScheduledEvent>,
     block_duration: f64,
@@ -66,11 +81,13 @@ pub struct Ruffbox {
 
 impl Ruffbox {
     pub fn new() -> Ruffbox {
-        let (tx, rx): (crossbeam::channel::Sender<ScheduledEvent>, crossbeam::channel::Receiver<ScheduledEvent>) = crossbeam::channel::bounded(1000);
+        let (tx, rx): (Sender<ScheduledEvent>, Receiver<ScheduledEvent>) = crossbeam::channel::bounded(1000);
         Ruffbox {            
             running_instances: Vec::with_capacity(600),
             pending_events: Vec::with_capacity(600),
-            buffers: Vec::with_capacity(20),            
+            buffers: Vec::with_capacity(20),
+            prepared_instance_map: DHashMap::default(),
+            instance_counter: AtomicCell::new(0),
             new_instances_q_send: tx,
             new_instances_q_rec: rx,
             // timing stuff
@@ -133,14 +150,28 @@ impl Ruffbox {
         out_buf
     }
 
-    /// triggers a synth for buffer reference or a synth
-    pub fn trigger(&mut self, temp: usize, timestamp: f64) {
-        // add check if it actually exists !
-        let scheduled_event = match temp {
-            555 => ScheduledEvent::new(timestamp, Box::new(SineOsc::new(440.0, 0.2, 0.3, 44100.0))),
-            _ => ScheduledEvent::new(timestamp, Box::new(Sampler::with_buffer_ref(&self.buffers[temp]))),
+    /// prepare a sound source instance, return instance id 
+    pub fn prepare_instance(&mut self, src_type: SourceType, timestamp: f64, sample_buf: usize) -> usize {
+        let instance_id = self.instance_counter.fetch_add(1);
+
+        let scheduled_event = match src_type {
+            SourceType::SinOsc => ScheduledEvent::new(timestamp, Box::new(SineOsc::new(440.0, 0.2, 0.3, 44100.0))),
+            SourceType::Sampler => ScheduledEvent::new(timestamp, Box::new(Sampler::with_buffer_ref(&self.buffers[sample_buf]))),
         };
+
+        self.prepared_instance_map.insert(instance_id, scheduled_event);
         
+        instance_id
+    }
+
+    pub fn set_instance_parameter(&mut self, instance_id: usize, par: SourceParameter, val: f32) {
+        self.prepared_instance_map.index_mut(instance_id).set_parameter(par, val);
+    }
+    
+    /// triggers a synth for buffer reference or a synth
+    pub fn trigger(&mut self, instance_id: usize ) {
+        // add check if it actually exists !
+        let (id, scheduled_event) = self.prepared_instance_map.remove(instance_id).unwrap();        
         self.new_instances_q_send.send(scheduled_event).unwrap();
     }
 
@@ -170,9 +201,12 @@ mod tests {
         let bnum2 = ruff.load_sample(&sample2);
         
         ruff.process(0.0);
+
+        let inst_1 = ruff.prepare_instance(SourceType::Sampler, 0.0, bnum1);
+        let inst_2 = ruff.prepare_instance(SourceType::Sampler, 0.0, bnum2);
         
-        ruff.trigger(bnum1, 0.0);
-        ruff.trigger(bnum2, 0.0);
+        ruff.trigger(inst_1);
+        ruff.trigger(inst_2);
 
         let out_buf = ruff.process(0.0);
         
@@ -194,9 +228,11 @@ mod tests {
         let bnum1 = ruff.load_sample(&sample1);
         let bnum2 = ruff.load_sample(&sample2);
 
-        // schedule two samples ahead, to the same point in time
-        ruff.trigger(bnum1, 0.291);
-        ruff.trigger(bnum2, 0.291);
+        let inst_1 = ruff.prepare_instance(SourceType::Sampler, 0.291, bnum1);
+        let inst_2 = ruff.prepare_instance(SourceType::Sampler, 0.291, bnum2);
+        
+        ruff.trigger(inst_1);
+        ruff.trigger(inst_2);
         
         let mut stream_time = 0.0;
         // calculate a few blocks
@@ -226,9 +262,11 @@ mod tests {
         let bnum1 = ruff.load_sample(&sample1);
         let bnum2 = ruff.load_sample(&sample2);
 
-        // schedule two samples ahead, so they should overlap by five ticks
-        ruff.trigger(bnum1, 0.291);
-        ruff.trigger(bnum2, 0.291 + (4.0 * sec_per_sample));
+        let inst_1 = ruff.prepare_instance(SourceType::Sampler, 0.291, bnum1);
+        let inst_2 = ruff.prepare_instance(SourceType::Sampler, 0.291 + (4.0 * sec_per_sample), bnum2);
+        
+        ruff.trigger(inst_1);
+        ruff.trigger(inst_2);
         
         let mut stream_time = 0.0;
         
@@ -268,12 +306,15 @@ mod tests {
 
         // schedule two samples ahead, so they should  occur in different blocks
         // first sample should appear in block 100
-        ruff.trigger(bnum1, 0.291);
-
+        
         // second sample should appear ten blocks later
         let second_sample_timestamp = 0.291 + (10.0 * block_duration);
-        
-        ruff.trigger(bnum2, second_sample_timestamp);
+
+        let inst_1 = ruff.prepare_instance(SourceType::Sampler, 0.291, bnum1);
+        let inst_2 = ruff.prepare_instance(SourceType::Sampler, second_sample_timestamp, bnum2);
+
+        ruff.trigger(inst_1);
+        ruff.trigger(inst_2);
         
         let mut stream_time = 0.0;
         

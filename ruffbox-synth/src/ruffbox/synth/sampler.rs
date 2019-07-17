@@ -1,6 +1,7 @@
 // parent imports
 use crate::ruffbox::synth::Source;
 use crate::ruffbox::synth::SourceState;
+use crate::ruffbox::synth::SourceParameter;
 
 use std::sync::Arc;
 
@@ -24,6 +25,11 @@ impl Sampler {
 }
 
 impl Source for Sampler {
+
+    fn set_parameter(&mut self, _par: SourceParameter, _value: f32) {
+        // tbd ...
+    }
+    
     fn finish(&mut self) {
         self.state = SourceState::Finished;
     }
