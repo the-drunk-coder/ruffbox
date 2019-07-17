@@ -143,11 +143,14 @@ impl Scheduler {
                 "sine" => "SinOsc",
                 _ => "Sampler",
             };
-
+            
+            let mut param_map: std::collections::HashMap<String, f32> = std::collections::HashMap::new();
+            param_map.insert("lvl".to_string(), 0.1);
+            
             if next_event != "~" {
                 // post events that will be dispatched to sampler
                 js! {                
-                    postMessage( { source_type: @{ next_source_type }, timestamp: @{ trigger_time }, sample_id: @{ next_event} } );
+                    postMessage( { source_type: @{ next_source_type }, timestamp: @{ trigger_time }, sample_id: @{ next_event }, params: @{ param_map }} );
                 }
             }
         }
