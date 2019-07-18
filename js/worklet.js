@@ -93,8 +93,11 @@ class RuffboxProcessor extends AudioWorkletProcessor {
 		if(this._wasm) {
 		    let event = e.data.event;
 		    let params = e.data.event.params;
-		    //console.log(params);
+		    console.log(params);
 		    let instance_id = this._wasm.exports.prepare(this._sourceType[event.source_type], event.timestamp, this._sampleMapping[event.sample_id]);
+		    for (let [key, value] of Object.entries(params)) {
+			this._wasm.exports.set_instance_parameter(instance_id, this._sourceParameter[key], value);
+		    }
 		    this._wasm.exports.trigger(instance_id);
 		}
 	    }

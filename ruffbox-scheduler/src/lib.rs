@@ -4,6 +4,8 @@ extern crate web_sys;
 
 use wasm_bindgen::prelude::*;
 
+use std::collections::HashMap;
+
 // A macro to provide `println!(..)`-style syntax for `console.log` logging.
 macro_rules! log {
     ( $( $t:tt )* ) => {
@@ -11,9 +13,9 @@ macro_rules! log {
     }
 }
 
-/// A simple event sequence represented by a vector of strings
+/// A simple event sequence represented by a vector of strings and params
 struct EventSequence {
-    events: Vec<String>,
+    events: Vec<(String, HashMap<String, f32>)>,
     idx: usize,
 }
 
@@ -25,8 +27,19 @@ impl EventSequence {
         
         let iter = input_line.split_ascii_whitespace();
         
-        for event in iter {
-            seq.push(event.to_string());
+        for event in iter {            
+            let event_with_params: Vec<&str> = event
+                .split(":").collect();
+            
+            let event_type = event_with_params[0];
+            let mut param_map = HashMap::new();
+
+            for par in &event_with_params[1..] {
+                let par_val: Vec<&str> = par.split("=").collect();
+                param_map.insert(par_val[0].to_string(), par_val[1].parse().unwrap());
+            }
+            
+            seq.push((event_type.to_string(), param_map));
         }
 
         EventSequence {
@@ -40,18 +53,28 @@ impl EventSequence {
         self.events.clear();
 
         let iter = input_line.split_ascii_whitespace();
-        
-        for event in iter {
-            self.events.push(event.to_string());
-        }
 
+        for event in iter {            
+            let event_with_params: Vec<&str> = event.split(":").collect();
+            
+            let event_type = event_with_params[0];
+            let mut param_map = HashMap::new();
+
+            for par in &event_with_params[1..] {
+                let par_val: Vec<&str> = par.split("=").collect();
+                param_map.insert(par_val[0].to_string(), par_val[1].parse().unwrap());
+            }
+            
+            self.events.push((event_type.to_string(), param_map));
+        }
+        
         if self.idx >= self.events.len() {
             self.idx = self.events.len() - 1;
         }
     }
 
     /// get the next event in the sequence
-    pub fn get_next_event(&mut self) -> &String {
+    pub fn get_next_event(&mut self) -> &(String, HashMap<String, f32>) {
         if self.events.is_empty() {
             "~".to_string();
         }
@@ -137,20 +160,17 @@ impl Scheduler {
         
         for seq in self.event_sequences.iter_mut() {
 
-            let next_event = seq.get_next_event();
+            let (next_event, next_params) = seq.get_next_event();
 
             let next_source_type = match next_event.as_ref() {
                 "sine" => "SinOsc",
                 _ => "Sampler",
             };
-            
-            let mut param_map: std::collections::HashMap<String, f32> = std::collections::HashMap::new();
-            param_map.insert("lvl".to_string(), 0.1);
-            
+                        
             if next_event != "~" {
                 // post events that will be dispatched to sampler
                 js! {                
-                    postMessage( { source_type: @{ next_source_type }, timestamp: @{ trigger_time }, sample_id: @{ next_event }, params: @{ param_map }} );
+                    postMessage( { source_type: @{ next_source_type }, timestamp: @{ trigger_time }, sample_id: @{ next_event }, params: @{ next_params }} );
                 }
             }
         }
