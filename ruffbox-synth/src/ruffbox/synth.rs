@@ -1,13 +1,16 @@
 pub mod sampler;
+pub mod envelopes;
 pub mod oscillators;
+pub mod synths;
 
-pub enum SourceState {    
+pub enum SourceState { 
     Fresh,
     Finished
 }
 
 /// a collection of common parameters
 #[allow(dead_code)]
+#[derive(Clone,Copy)]
 pub enum SourceParameter {
     Attack,    
     Decay,
@@ -37,7 +40,8 @@ pub enum SourceParameter {
 
 pub enum SourceType {
     Sampler,
-    SinOsc,
+    SineOsc,
+    SineSynth,
 }
 
 pub trait Source {
@@ -49,5 +53,5 @@ pub trait Source {
 
 pub trait Effect {
     fn set_parameter(&mut self, par: SourceParameter, value: f32);    
-    fn process_block(&mut self, block: [f32; 128]) -> [f32; 128];
+    fn process_block(&mut self, block: [f32; 128], start_sample: usize) -> [f32; 128];
 }

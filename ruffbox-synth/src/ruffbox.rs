@@ -5,7 +5,6 @@ use crossbeam::channel::Sender;
 use crossbeam::channel::Receiver;
 use crossbeam::atomic::AtomicCell;
 
-
 use std::collections::HashMap;
 
 use std::cmp::Ordering;
@@ -16,6 +15,7 @@ use crate::ruffbox::synth::SourceParameter;
 use crate::ruffbox::synth::SourceType;
 use crate::ruffbox::synth::sampler::Sampler;
 use crate::ruffbox::synth::oscillators::SineOsc;
+use crate::ruffbox::synth::synths::SineSynth;
 
 /// timed event, to be created in the trigger method, then 
 /// sent to the event queue to be either dispatched directly
@@ -155,7 +155,8 @@ impl Ruffbox {
         let instance_id = self.instance_counter.fetch_add(1);
 
         let scheduled_event = match src_type {
-            SourceType::SinOsc => ScheduledEvent::new(timestamp, Box::new(SineOsc::new(440.0, 0.2, 0.3, 44100.0))),
+            SourceType::SineOsc => ScheduledEvent::new(timestamp, Box::new(SineOsc::new(440.0, 0.2, 0.3, 44100.0))),
+            SourceType::SineSynth => ScheduledEvent::new(timestamp, Box::new(SineSynth::new(44100.0))),
             SourceType::Sampler => ScheduledEvent::new(timestamp, Box::new(Sampler::with_buffer_ref(&self.buffers[sample_buf]))),
         };
 

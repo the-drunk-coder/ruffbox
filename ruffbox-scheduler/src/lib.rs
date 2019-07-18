@@ -163,7 +163,7 @@ impl Scheduler {
             let (next_event, next_params) = seq.get_next_event();
 
             let next_source_type = match next_event.as_ref() {
-                "sine" => "SinOsc",
+                "sine" => "SineSynth",
                 _ => "Sampler",
             };
                         

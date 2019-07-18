@@ -1,6 +1,7 @@
 const sourceType = Object.freeze({
     "Sampler" : 0,
-    "SinOsc" : 1,
+    "SineOsc" : 1,
+    "SineSynth" : 2,
 });
 
 const sourceParameter = Object.freeze({
@@ -29,7 +30,6 @@ const sourceParameter = Object.freeze({
     "StereoPosition" : 22,
     "Sustain" : 23,
 });
-
 
 const sourceParameterShortName = Object.freeze({
     "atk" : 0,
