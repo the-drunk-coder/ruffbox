@@ -30,7 +30,7 @@ impl Source for SineSynth {
     }
 
     fn is_finished(&self) -> bool {
-        self.oscillator.is_finished()
+        self.envelope.is_finished()
     }
 
     fn get_next_block(&mut self, start_sample: usize) -> [f32; 128] {
