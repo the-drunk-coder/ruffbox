@@ -13,3 +13,5 @@ lazy_static = "1.2.0"
 wee_alloc = { version = "0.4.2", optional = true }
 crossbeam = "0.7.0"
 
+[dev-dependencies]
+assert_approx_eq = "1.1.0"

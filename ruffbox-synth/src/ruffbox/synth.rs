@@ -52,6 +52,8 @@ pub trait Source {
 }
 
 pub trait Effect {
+    fn finish(&mut self);
+    fn is_finished(&self) -> bool;
     fn set_parameter(&mut self, par: SourceParameter, value: f32);    
     fn process_block(&mut self, block: [f32; 128], start_sample: usize) -> [f32; 128];
 }
