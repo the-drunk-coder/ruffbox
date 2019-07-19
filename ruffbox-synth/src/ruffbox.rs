@@ -91,8 +91,8 @@ impl Ruffbox {
             new_instances_q_send: tx,
             new_instances_q_rec: rx,
             // timing stuff
-            block_duration: 0.00290249433,
-            sec_per_sample: 0.00002267573,
+            block_duration: 128.0 / 44100.0,
+            sec_per_sample: 1.0 / 44100.0,
             now: 0.0,
         }
     }
@@ -127,7 +127,7 @@ impl Ruffbox {
 
             // calculate precise timing
             let sample_offset = (current_event.timestamp - stream_time) / self.sec_per_sample;           
-            let block = current_event.source.get_next_block(sample_offset as usize);
+            let block = current_event.source.get_next_block(sample_offset.round() as usize);
             for s in 0..128 {
                 out_buf[s] += block[s];
             }
