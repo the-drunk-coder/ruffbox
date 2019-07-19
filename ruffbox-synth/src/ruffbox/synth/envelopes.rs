@@ -115,21 +115,20 @@ mod tests {
 
     #[test]
     fn test_asr_envelope() {
-        let mut test_block: [f32; 128] = [1.0; 128];
+        let test_block: [f32; 128] = [1.0; 128];
 
         // half a block attack, one block sustain, half a block release ... 2 blocks total .
         let mut env = ASREnvelope::new(44100.0, 0.5, 0.0014512, 0.0029024, 0.0014512);
 
-        let mut out_1: [f32; 128] = env.process_block(test_block, 0);
-        let mut out_2: [f32; 128] = env.process_block(test_block, 0);
+        let out_1: [f32; 128] = env.process_block(test_block, 0);
+        let out_2: [f32; 128] = env.process_block(test_block, 0);
 
         // comparison
         let mut comp_block_1: [f32; 128] = [0.0; 128];
         let mut comp_block_2: [f32; 128] = [0.0; 128];
 
-
         let mut gain = 0.0;
-        let mut gain_inc_dec = 0.5 / 64.0;
+        let gain_inc_dec = 0.5 / 64.0;
             
         // fill comp blocks
         for i in 0..64 {
