@@ -41,7 +41,7 @@ pub extern "C" fn prepare(src_type: ruffbox::synth::SourceType, timestamp: f64, 
 }
 
 #[no_mangle]
-pub extern "C" fn set_instance_parameter(instance_id: usize, par: ruffbox::synth::SourceParameter, val: f32) {
+pub extern "C" fn set_instance_parameter(instance_id: usize, par: ruffbox::synth::SynthParameter, val: f32) {
     let mut ruff = RUFF.lock().unwrap();
     ruff.set_instance_parameter(instance_id, par, val);
 }

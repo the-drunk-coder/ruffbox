@@ -1,6 +1,6 @@
 use crate::ruffbox::synth::Effect;
-use crate::ruffbox::synth::SourceParameter;
-use crate::ruffbox::synth::SourceState;
+use crate::ruffbox::synth::SynthParameter;
+use crate::ruffbox::synth::SynthState;
 
 
 
@@ -18,7 +18,7 @@ pub struct ASREnvelope {
     max_lvl: f32,
     atk_lvl_increment: f32,
     rel_lvl_decrement: f32,
-    state: SourceState,
+    state: SynthState,
 }
 
 impl ASREnvelope {
@@ -42,38 +42,38 @@ impl ASREnvelope {
             max_lvl: lvl,
             atk_lvl_increment: lvl / atk_samples,
             rel_lvl_decrement: lvl / (rel_samples - sus_samples),
-            state: SourceState::Fresh,
+            state: SynthState::Fresh,
         }
     }    
 }
 
 impl Effect for ASREnvelope {
     fn finish(&mut self) {
-        self.state = SourceState::Finished;
+        self.state = SynthState::Finished;
     }
 
     fn is_finished(&self) -> bool {
         match self.state {
-            SourceState::Finished => true,
+            SynthState::Finished => true,
             _ => false,
         }
     }
 
-    fn set_parameter(&mut self, par: SourceParameter, value: f32) {
+    fn set_parameter(&mut self, par: SynthParameter, value: f32) {
         match par {
-            SourceParameter::Attack => {
+            SynthParameter::Attack => {
                 self.atk_samples = (self.samplerate / value).round() as usize;
                 self.sus_samples = self.atk_samples + (self.samplerate / self.sus).round() as usize;
                 self.rel_samples = self.sus_samples + (self.samplerate / self.rel).round() as usize;                
             },
-            SourceParameter::Sustain => {
+            SynthParameter::Sustain => {
                 self.sus_samples = self.atk_samples + (self.samplerate / value).round() as usize;
                 self.rel_samples = self.sus_samples + (self.samplerate / self.rel).round() as usize;  
             },
-            SourceParameter::Release => {
+            SynthParameter::Release => {
                 self.rel_samples = self.sus_samples + (self.samplerate / value).round() as usize;
             },
-            SourceParameter::Samplerate => {
+            SynthParameter::Samplerate => {
                 self.atk_samples = (self.samplerate / self.atk).round() as usize;
                 self.sus_samples = self.atk_samples + (self.samplerate / self.sus).round() as usize;
                 self.rel_samples = self.sus_samples + (self.samplerate / self.rel).round() as usize;

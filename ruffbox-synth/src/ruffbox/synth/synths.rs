@@ -2,7 +2,7 @@ use crate::ruffbox::synth::*;
 use crate::ruffbox::synth::oscillators::*;
 use crate::ruffbox::synth::envelopes::*;
 use crate::ruffbox::synth::Source;
-use crate::ruffbox::synth::SourceParameter;
+use crate::ruffbox::synth::SynthParameter;
 
 /// a sinusoidal synth with envelope etc.
 pub struct SineSynth {
@@ -20,7 +20,7 @@ impl SineSynth {
 }
 
 impl Source for SineSynth {
-    fn set_parameter(&mut self, par: SourceParameter, val: f32) {
+    fn set_parameter(&mut self, par: SynthParameter, val: f32) {
         self.oscillator.set_parameter(par, val);
         self.envelope.set_parameter(par, val);
     }

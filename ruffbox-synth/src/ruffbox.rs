@@ -11,7 +11,7 @@ use std::cmp::Ordering;
 use std::sync::Arc;
 
 use crate::ruffbox::synth::Source;
-use crate::ruffbox::synth::SourceParameter;
+use crate::ruffbox::synth::SynthParameter;
 use crate::ruffbox::synth::SourceType;
 use crate::ruffbox::synth::sampler::Sampler;
 use crate::ruffbox::synth::oscillators::SineOsc;
@@ -60,7 +60,7 @@ impl ScheduledEvent {
         }
     }
 
-    pub fn set_parameter(&mut self, par: SourceParameter, value: f32) {
+    pub fn set_parameter(&mut self, par: SynthParameter, value: f32) {
         self.source.set_parameter(par, value);
     }
 }
@@ -165,7 +165,7 @@ impl Ruffbox {
         instance_id
     }
 
-    pub fn set_instance_parameter(&mut self, instance_id: usize, par: SourceParameter, val: f32) {
+    pub fn set_instance_parameter(&mut self, instance_id: usize, par: SynthParameter, val: f32) {
         self.prepared_instance_map.get_mut(&instance_id).unwrap().set_parameter(par, val);
     }
     

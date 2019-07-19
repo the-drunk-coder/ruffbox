@@ -1,6 +1,6 @@
 use crate::ruffbox::synth::Source;
-use crate::ruffbox::synth::SourceState;
-use crate::ruffbox::synth::SourceParameter;
+use crate::ruffbox::synth::SynthState;
+use crate::ruffbox::synth::SynthParameter;
 
 use std::f32::consts::PI;
 
@@ -16,7 +16,7 @@ pub struct SineOsc {
     sin_time: f32,
     sin_delta_time: f32,
     pi_slice: f32,
-    state: SourceState,
+    state: SynthState,
 }
 
 impl SineOsc {    
@@ -30,7 +30,7 @@ impl SineOsc {
             sin_time: 0.0,
             sin_delta_time: 1.0 / sr,
             pi_slice: 2.0 * PI * freq,
-            state: SourceState::Fresh,
+            state: SynthState::Fresh,
         }
     }
 }
@@ -38,22 +38,22 @@ impl SineOsc {
 impl Source for SineOsc {
 
     // some parameter limits might be nice ... 
-    fn set_parameter(&mut self, par: SourceParameter, value: f32) {
+    fn set_parameter(&mut self, par: SynthParameter, value: f32) {
         match par {
-            SourceParameter::PitchFrequency => self.pi_slice = 2.0 * PI * value,
-            SourceParameter::Duration => self.dur = value,
-            SourceParameter::Level => self.lvl = value, 
+            SynthParameter::PitchFrequency => self.pi_slice = 2.0 * PI * value,
+            SynthParameter::Duration => self.dur = value,
+            SynthParameter::Level => self.lvl = value, 
             _ => (),
         };
     }
     
     fn finish(&mut self) {
-        self.state = SourceState::Finished;
+        self.state = SynthState::Finished;
     }
 
     fn is_finished(&self) -> bool {
         match self.state {
-            SourceState::Finished => true,
+            SynthState::Finished => true,
             _ => false,
         }
     }

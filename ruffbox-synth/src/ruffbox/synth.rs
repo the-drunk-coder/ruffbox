@@ -3,7 +3,7 @@ pub mod envelopes;
 pub mod oscillators;
 pub mod synths;
 
-pub enum SourceState { 
+pub enum SynthState { 
     Fresh,
     Finished
 }
@@ -11,7 +11,7 @@ pub enum SourceState {
 /// a collection of common parameters
 #[allow(dead_code)]
 #[derive(Clone,Copy)]
-pub enum SourceParameter {
+pub enum SynthParameter {
     Attack,    
     Decay,
     Duration,    
@@ -45,7 +45,7 @@ pub enum SourceType {
 }
 
 pub trait Source {
-    fn set_parameter(&mut self, par: SourceParameter, value: f32);
+    fn set_parameter(&mut self, par: SynthParameter, value: f32);
     fn finish(&mut self);
     fn is_finished(&self) -> bool;
     fn get_next_block(&mut self, start_sample: usize) -> [f32; 128];
@@ -54,6 +54,6 @@ pub trait Source {
 pub trait Effect {
     fn finish(&mut self);
     fn is_finished(&self) -> bool;
-    fn set_parameter(&mut self, par: SourceParameter, value: f32);    
+    fn set_parameter(&mut self, par: SynthParameter, value: f32);    
     fn process_block(&mut self, block: [f32; 128], start_sample: usize) -> [f32; 128];
 }

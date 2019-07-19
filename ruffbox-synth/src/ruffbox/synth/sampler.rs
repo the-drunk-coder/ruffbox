@@ -1,7 +1,7 @@
 // parent imports
 use crate::ruffbox::synth::Source;
-use crate::ruffbox::synth::SourceState;
-use crate::ruffbox::synth::SourceParameter;
+use crate::ruffbox::synth::SynthState;
+use crate::ruffbox::synth::SynthParameter;
 
 use std::sync::Arc;
 
@@ -11,7 +11,7 @@ use std::sync::Arc;
 pub struct Sampler {
     index: usize,
     buffer_ref: Arc<Vec<f32>>,
-    state: SourceState,
+    state: SynthState,
 }
 
 impl Sampler {    
@@ -19,24 +19,24 @@ impl Sampler {
         Sampler {
             index: 0,
             buffer_ref: buf.clone(),
-            state: SourceState::Fresh,
+            state: SynthState::Fresh,
         }
     }
 }
 
 impl Source for Sampler {
 
-    fn set_parameter(&mut self, _par: SourceParameter, _value: f32) {
+    fn set_parameter(&mut self, _par: SynthParameter, _value: f32) {
         // tbd ...
     }
     
     fn finish(&mut self) {
-        self.state = SourceState::Finished;
+        self.state = SynthState::Finished;
     }
 
     fn is_finished(&self) -> bool {
         match self.state {
-            SourceState::Finished => true,
+            SynthState::Finished => true,
             _ => false,
         }
     }
