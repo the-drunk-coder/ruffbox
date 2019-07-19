@@ -62,21 +62,21 @@ impl Effect for ASREnvelope {
     fn set_parameter(&mut self, par: SynthParameter, value: f32) {
         match par {
             SynthParameter::Attack => {
-                self.atk_samples = (self.samplerate / value).round() as usize;
-                self.sus_samples = self.atk_samples + (self.samplerate / self.sus).round() as usize;
-                self.rel_samples = self.sus_samples + (self.samplerate / self.rel).round() as usize;                
+                self.atk_samples = (self.samplerate * value).round() as usize;
+                self.sus_samples = self.atk_samples + (self.samplerate * self.sus).round() as usize;
+                self.rel_samples = self.sus_samples + (self.samplerate * self.rel).round() as usize;                
             },
             SynthParameter::Sustain => {
-                self.sus_samples = self.atk_samples + (self.samplerate / value).round() as usize;
-                self.rel_samples = self.sus_samples + (self.samplerate / self.rel).round() as usize;  
+                self.sus_samples = self.atk_samples + (self.samplerate * value).round() as usize;
+                self.rel_samples = self.sus_samples + (self.samplerate * self.rel).round() as usize;  
             },
             SynthParameter::Release => {
-                self.rel_samples = self.sus_samples + (self.samplerate / value).round() as usize;
+                self.rel_samples = self.sus_samples + (self.samplerate * value).round() as usize;
             },
             SynthParameter::Samplerate => {
-                self.atk_samples = (self.samplerate / self.atk).round() as usize;
-                self.sus_samples = self.atk_samples + (self.samplerate / self.sus).round() as usize;
-                self.rel_samples = self.sus_samples + (self.samplerate / self.rel).round() as usize;
+                self.atk_samples = (self.samplerate * self.atk).round() as usize;
+                self.sus_samples = self.atk_samples + (self.samplerate * self.sus).round() as usize;
+                self.rel_samples = self.sus_samples + (self.samplerate * self.rel).round() as usize;
             }
             _ => ()
         };
