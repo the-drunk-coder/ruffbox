@@ -6,7 +6,7 @@ Currently needs Chromium/Chrome 74+ for the *AudioWorklet*, and the *#enable-exp
 
 ## Project Structure
 
-* **ruffbox-sampler** contains the Rust part of the sample player
+* **ruffbox-synth** contains synthesizer part of the application
 * **ruffbox-scheduler** contains the Rust part of the step-sequencer/scheduler
 * **js/scheduler.js** contains the JavaScript WebWorker part of the scheduler
 * **js/setup.js** contains the JavaScript glue code to put things together, load the audio context etc.
@@ -14,11 +14,11 @@ Currently needs Chromium/Chrome 74+ for the *AudioWorklet*, and the *#enable-exp
 
 ## Basic Idea
 
-This is basically a proof-of-concept on how to make a multi-threaded audio application that runs in a web browser.
+This basically is (or is eveolving from) a proof-of-concept on how to make a multi-threaded audio application that runs in a web browser.
 
 It has three parts that communicate over message-passing:
 
-* the *ruffbox-sampler*, a sample player that runs inside an *AudioWorkletProcessor*
+* the *ruffbox-synth*, a synth player that runs inside an *AudioWorkletProcessor*
 * the *ruffbox-scheduler*, a seqeunce generator that runs in a *Web Worker* thread
 * the user interaction part, running in the main thread
 
