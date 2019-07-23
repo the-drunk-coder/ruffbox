@@ -15,7 +15,7 @@ use crate::ruffbox::synth::SynthParameter;
 use crate::ruffbox::synth::SourceType;
 use crate::ruffbox::synth::sampler::Sampler;
 use crate::ruffbox::synth::oscillators::SineOsc;
-use crate::ruffbox::synth::synths::SineSynth;
+use crate::ruffbox::synth::synths::*;
 
 /// timed event, to be created in the trigger method, then 
 /// sent to the event queue to be either dispatched directly
@@ -158,6 +158,7 @@ impl Ruffbox {
             SourceType::SineOsc => ScheduledEvent::new(timestamp, Box::new(SineOsc::new(440.0, 0.2, 0.3, 44100.0))),
             SourceType::SineSynth => ScheduledEvent::new(timestamp, Box::new(SineSynth::new(44100.0))),
             SourceType::Sampler => ScheduledEvent::new(timestamp, Box::new(Sampler::with_buffer_ref(&self.buffers[sample_buf]))),
+            SourceType::LFSawSynth => ScheduledEvent::new(timestamp, Box::new(LFSawSynth::new(44100.0))),
         };
 
         self.prepared_instance_map.insert(instance_id, scheduled_event);

@@ -2,6 +2,7 @@ pub mod sampler;
 pub mod envelopes;
 pub mod oscillators;
 pub mod synths;
+pub mod filters;
 
 pub enum SynthState { 
     Fresh,
@@ -42,6 +43,7 @@ pub enum SourceType {
     Sampler,
     SineOsc,
     SineSynth,
+    LFSawSynth,
 }
 
 pub trait Source {

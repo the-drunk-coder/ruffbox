@@ -87,7 +87,7 @@ pub struct LFSaw {
     lvl_inc: f32,
     cur_lvl: f32,
     period_count: usize,
-    state: SynthState,
+    //state: SynthState,
 }
 
 impl LFSaw {    
@@ -100,7 +100,7 @@ impl LFSaw {
             lvl_inc: (2.0 * lvl) / (sr / freq).round(),
             cur_lvl: -1.0 * lvl,                       
             period_count: 0,
-            state: SynthState::Fresh,            
+            //state: SynthState::Fresh,            
         }
     }
 }

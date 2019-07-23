@@ -1,5 +1,5 @@
 use crate::ruffbox::synth::Effect;
-use crate::ruffbox::synth::SynthState;
+//use crate::ruffbox::synth::SynthState;
 use crate::ruffbox::synth::SynthParameter;
 
 /**
@@ -17,7 +17,7 @@ pub struct Lpf18 {
     ay2: f32,
     ay11: f32,
     ay31: f32,
-    ax: f32
+    ax1: f32,
     kfcn: f32,
     kp: f32,
     kp1: f32,
@@ -26,30 +26,38 @@ pub struct Lpf18 {
     value: f32,
     aout: f32,
     lastin: f32,
-    sample_duration: f32,
+    //sample_duration: f32,
     samplerate: f32,
 }
 
 impl Lpf18 {
-    pub fn new(freq: f32, res: f32, dist: f32, lvl: f32, sr: f32) -> Self {
-        cutoff: freq,
-        res: res,
-        dist: dist,
-        ay1: 0.0,
-        ay2: 0.0,
-        ax: 0.0,
-        ay11: 0.0,
-        ay31: 0.0,            
-        kfcn: 2.0 * freq * (1.0 / sr),
-        kp: ((-2.7528 * kfcn + 3.0429) * kfcn + 1.718) * kfcn - 0.9984,
-        kp1: kp + 1.0;
-        kp1h: 0.5 * kp1;
-        kres: res * (((-2.7079 * kp1 + 10.963) * kp1 - 14.934) * kp1 + 8.4974),
-        value: 1.0 + (dist * (1.5 + 2.0 * res * (1.0 - kfcn))),
-        aout: 0.0,
-        lastin: 0.0,
-        sample_duration: 1.0 / sr,
-        samplerate: sr,
+    pub fn new(freq: f32, res: f32, dist: f32, sr: f32) -> Self {
+        let kfcn = 2.0 * freq * (1.0 / sr);
+        let kp = ((-2.7528 * kfcn + 3.0429) * kfcn + 1.718) * kfcn - 0.9984;
+        let kp1 = kp + 1.0;
+        let kp1h = 0.5 * kp1;
+        let kres = res * (((-2.7079 * kp1 + 10.963) * kp1 - 14.934) * kp1 + 8.4974);
+        let value = 1.0 + (dist * (1.5 + 2.0 * res * (1.0 - kfcn)));
+        Lpf18 {
+            cutoff: freq,
+            res: res,
+            dist: dist,
+            ay1: 0.0,
+            ay2: 0.0,
+            ax1: 0.0,
+            ay11: 0.0,
+            ay31: 0.0,            
+            kfcn: kfcn,
+            kp: kp,
+            kp1: kp1,
+            kp1h: kp1h,
+            kres: kres,
+            value: value,
+            aout: 0.0,
+            lastin: 0.0,
+            //sample_duration: 1.0 / sr,
+            samplerate: sr,
+        }
     }
 }
 
