@@ -80,10 +80,9 @@ impl Source for SineOsc {
  * A non-band-limited sawtooth oscillator.
  */
 pub struct LFSaw {
-    //freq: f32,
+    freq: f32,
     lvl: f32,
-    //samplerate: f32,
-    //dur_samples: f32,    
+    samplerate: f32,    
     period_samples: usize,
     lvl_inc: f32,
     cur_lvl: f32,
@@ -94,9 +93,9 @@ pub struct LFSaw {
 impl LFSaw {    
     pub fn new(freq: f32, lvl: f32, sr: f32) -> Self {
         LFSaw {
-            //freq: freq,
+            freq: freq,
             lvl: lvl,
-            //samplerate: sr,
+            samplerate: sr,
             period_samples: (sr / freq).round() as usize,
             lvl_inc: (2.0 * lvl) / (sr / freq).round(),
             cur_lvl: -1.0 * lvl,                       
@@ -110,20 +109,26 @@ impl Source for LFSaw {
 
     // some parameter limits might be nice ... 
     fn set_parameter(&mut self, par: SynthParameter, value: f32) {
-        match par {            
+        match par {
+            SynthParameter::PitchFrequency => {
+                self.freq = value;
+                self.period_samples = (self.samplerate / value).round() as usize;
+                self.lvl_inc = (2.0 * self.lvl) / (self.samplerate / value).round();
+            },            
+            SynthParameter::Level => {
+                self.lvl = value;
+                self.lvl_inc = (2.0 * self.lvl) / (self.samplerate / self.freq).round();
+            },
             _ => (),
         };
     }
     
     fn finish(&mut self) {
-        self.state = SynthState::Finished;
+       //self.state = SynthState::Finished;
     }
-
+    
     fn is_finished(&self) -> bool {
-        match self.state {
-            SynthState::Finished => true,
-            _ => false,
-        }
+        false
     }
 
     fn get_next_block(&mut self, start_sample: usize) -> [f32; 128] {
