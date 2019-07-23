@@ -164,6 +164,7 @@ impl Scheduler {
 
             let next_source_type = match next_event.as_ref() {
                 "sine" => "SineSynth",
+                "saw" => "LFSawSynth",
                 _ => "Sampler",
             };
                         

@@ -2,6 +2,7 @@ const sourceType = Object.freeze({
     "Sampler" : 0,
     "SineOsc" : 1,
     "SineSynth" : 2,
+    "LFSawSynth" : 3,
 });
 
 const sourceParameter = Object.freeze({
