@@ -1,6 +1,6 @@
 # ruffbox
 
-A simple sampler with text-based step sequencer that runs in the browser.
+A simple sampler/synth with text-based step sequencer that runs in the browser.
 
 Currently needs Chromium/Chrome 74+ for the *AudioWorklet*, and the *#enable-experimental-web-platform-features* flag enabled for the module workers.
 
