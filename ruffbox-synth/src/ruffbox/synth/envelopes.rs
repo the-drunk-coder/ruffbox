@@ -88,9 +88,24 @@ impl Effect for ASREnvelope {
             self.atk_samples = (self.samplerate * self.atk).round() as usize;
             self.sus_samples = self.atk_samples + (self.samplerate * self.sus).round() as usize;
             self.rel_samples = self.sus_samples + (self.samplerate * self.rel).round() as usize;
-            
+
+            // keep values sane 
             self.atk_lvl_increment = self.max_lvl / self.atk_samples as f32;
-            self.rel_lvl_decrement = self.max_lvl / (self.samplerate * self.rel).round();      
+            if self.atk_lvl_increment != 0.0 && !self.atk_lvl_increment.is_normal() {
+                self.atk_lvl_increment = 0.0;
+            }
+            
+            self.rel_lvl_decrement = self.max_lvl / (self.rel_samples - self.sus_samples)  as f32;
+            if self.rel_lvl_decrement != 0.0 && !self.rel_lvl_decrement.is_normal() {
+                self.rel_lvl_decrement = 0.0;
+            }
+            
+            println!("atk sam: {} sus sam: {} rel sam: {} atk inc: {} rel dec: {}",
+                     self.atk_samples,
+                     self.sus_samples,
+                     self.rel_samples,
+                     self.atk_lvl_increment,
+                     self.rel_lvl_decrement);
         }
     }
     
@@ -101,17 +116,17 @@ impl Effect for ASREnvelope {
             out[i] = block[i] * self.lvl;
 
             self.sample_count += 1;
-
-            if self.sample_count <= self.atk_samples {
+            if self.sample_count < self.atk_samples {
                 self.lvl += self.atk_lvl_increment;
-            } else if self.sample_count >= self.sus_samples && self.sample_count <= self.rel_samples {
+            } else if self.sample_count >= self.atk_samples && self.sample_count < self.sus_samples  {
+                self.lvl = self.max_lvl;            
+            } else if self.sample_count >= self.sus_samples && self.sample_count < self.rel_samples - 1 {
                 self.lvl -= self.rel_lvl_decrement;
-            } else if self.sample_count > self.rel_samples {
+            } else if self.sample_count >= self.rel_samples - 1 {
                 self.lvl = 0.0;
                 self.finish();
             }            
         }
-
         out
     }
 }
@@ -122,6 +137,7 @@ mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
 
+    /// test the general workings of the ASREnvelope
     #[test]
     fn test_asr_envelope() {
         let test_block: [f32; 128] = [1.0; 128];
@@ -169,8 +185,9 @@ mod tests {
         }
     }
 
+    /// test the parameter setter of the envelope
     #[test]
-    fn test_asr_envelope_set_params () {
+    fn test_asr_envelope_set_params () {       
         let test_block: [f32; 128] = [1.0; 128];
         
         // half a block attack, one block sustain, half a block release ... 2 blocks total .
@@ -219,8 +236,54 @@ mod tests {
         for i in 0..128 {
             //println!("{} {}", out_2[i], comp_block_2[i]);
             assert_approx_eq::assert_approx_eq!(out_2[i], comp_block_2[i], 0.00001);
-        }
-        
+        }        
     }
 
+    #[test]
+    fn test_asr_envelope_short_intervals_with_offset () {       
+        let test_block: [f32; 128] = [1.0; 128];
+                
+        // let this one start at the beginning of a block
+        let mut env_at_start = ASREnvelope::new(44100.0, 0.0, 0.0, 0.0, 0.0);
+        // let this one start somewhere in the block
+        let mut env_with_offset = ASREnvelope::new(44100.0, 0.0, 0.0, 0.0, 0.0);
+
+        // use paramter setter to set parameters ...
+        println!("Set parameters for env at start:");
+        env_at_start.set_parameter(SynthParameter::Level, 1.0);
+        env_at_start.set_parameter(SynthParameter::Attack, 0.001);
+        env_at_start.set_parameter(SynthParameter::Sustain, 0.019);
+        env_at_start.set_parameter(SynthParameter::Release, 0.07);
+
+
+        println!("\nSet parameters for env with offset:");
+        env_with_offset.set_parameter(SynthParameter::Level, 1.0);
+        env_with_offset.set_parameter(SynthParameter::Attack, 0.001);
+        env_with_offset.set_parameter(SynthParameter::Sustain, 0.019);
+        env_with_offset.set_parameter(SynthParameter::Release, 0.07);
+
+        println!("");
+        
+        let mut out_start = env_at_start.process_block(test_block, 0);
+        let mut out_offset = env_with_offset.process_block(test_block, 60);
+
+        // calculate 34 blocks
+        for _ in 0..34 {
+            for i in 0..68 {
+                //print!("{} {} - ", out_start[i], out_offset[i + 60]);
+                assert_approx_eq::assert_approx_eq!(out_start[i], out_offset[i + 60], 0.00001);
+            }
+            //println!{" block {}.1 done \n", i};
+
+            out_offset = env_with_offset.process_block(test_block, 0);
+            
+            for i in 68..128 {
+                //print!("{} {} - ", out_start[i], out_offset[i - 68]);
+                assert_approx_eq::assert_approx_eq!(out_start[i], out_offset[i - 68], 0.00001);
+            }
+
+            //println!{" block {}.2 done \n", i};
+            out_start = env_at_start.process_block(test_block, 0);                        
+        }                
+    }    
 }
