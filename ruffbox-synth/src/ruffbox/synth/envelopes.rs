@@ -3,7 +3,6 @@ use crate::ruffbox::synth::SynthParameter;
 use crate::ruffbox::synth::SynthState;
 
 
-
 /// simple attack-sustain-release envelope
 pub struct ASREnvelope {
     samplerate: f32,
@@ -27,7 +26,7 @@ impl ASREnvelope {
         let sus_samples = atk_samples + (samplerate * sus).round();
         let rel_samples = sus_samples + (samplerate * rel).round();
 
-        println!("atk sam: {} sus sam: {} rel sam: {}", atk_samples.round(),sus_samples.round(),rel_samples.round(), );
+        println!("atk sam: {} sus sam: {} rel sam: {}", atk_samples.round(), sus_samples.round(), rel_samples.round());
         
         ASREnvelope {
             samplerate: samplerate,
@@ -60,29 +59,39 @@ impl Effect for ASREnvelope {
     }
 
     fn set_parameter(&mut self, par: SynthParameter, value: f32) {
+        let mut update_internals = false;
         match par {
             SynthParameter::Attack => {
-                self.atk_samples = (self.samplerate * value).round() as usize;
-                self.sus_samples = self.atk_samples + (self.samplerate * self.sus).round() as usize;
-                self.rel_samples = self.sus_samples + (self.samplerate * self.rel).round() as usize;                
+                self.atk = value;
+                update_internals = true;
             },
             SynthParameter::Sustain => {
-                self.sus_samples = self.atk_samples + (self.samplerate * value).round() as usize;
-                self.rel_samples = self.sus_samples + (self.samplerate * self.rel).round() as usize;  
+                self.sus = value;
+                update_internals = true;
             },
             SynthParameter::Release => {
-                self.rel_samples = self.sus_samples + (self.samplerate * value).round() as usize;
+                self.rel = value;
+                update_internals = true;
+            },
+            SynthParameter::Level => {
+                self.max_lvl = value;
+                update_internals = true;
             },
             SynthParameter::Samplerate => {
-                self.atk_samples = (self.samplerate * self.atk).round() as usize;
-                self.sus_samples = self.atk_samples + (self.samplerate * self.sus).round() as usize;
-                self.rel_samples = self.sus_samples + (self.samplerate * self.rel).round() as usize;
+                self.samplerate = value;
+                update_internals = true;
             }
             _ => ()
         };
-        
-        self.atk_lvl_increment = self.max_lvl / self.atk_samples as f32;
-        self.rel_lvl_decrement = self.max_lvl / (self.rel_samples - self.sus_samples) as f32;      
+
+        if update_internals {
+            self.atk_samples = (self.samplerate * self.atk).round() as usize;
+            self.sus_samples = self.atk_samples + (self.samplerate * self.sus).round() as usize;
+            self.rel_samples = self.sus_samples + (self.samplerate * self.rel).round() as usize;
+            
+            self.atk_lvl_increment = self.max_lvl / self.atk_samples as f32;
+            self.rel_lvl_decrement = self.max_lvl / (self.samplerate * self.rel).round();      
+        }
     }
     
     fn process_block(&mut self, block: [f32; 128], start_sample: usize) -> [f32; 128] {        
@@ -117,7 +126,7 @@ mod tests {
     fn test_asr_envelope() {
         let test_block: [f32; 128] = [1.0; 128];
 
-        // half a block attack, one block sustain, half a block release ... 2 blocks total .
+        // half a block attack, one block sustain, half a block release ... 2 blocks total .        
         let mut env = ASREnvelope::new(44100.0, 0.5, 0.0014512, 0.0029024, 0.0014512);
 
         let out_1: [f32; 128] = env.process_block(test_block, 0);
@@ -129,7 +138,60 @@ mod tests {
 
         let mut gain = 0.0;
         let gain_inc_dec = 0.5 / 64.0;
-            
+        
+        // fill comp blocks
+        for i in 0..64 {
+            comp_block_1[i] = test_block[i] * gain;
+            gain += gain_inc_dec;
+        }
+
+        for i in 0..64 {
+            comp_block_1[64 + i] = test_block[64 + i] * gain;
+        }
+
+        for i in 0..64 {
+            comp_block_2[i] = test_block[i] * gain;
+        }
+
+        for i in 0..64 {
+            gain -= gain_inc_dec;
+            comp_block_2[64 + i] = test_block[64 + i] * gain;            
+        }
+
+        for i in 0..128 {
+            //println!("{} {}", out_1[i], comp_block_1[i]);
+            assert_approx_eq::assert_approx_eq!(out_1[i], comp_block_1[i], 0.00001);
+        }
+
+        for i in 0..128 {
+            //println!("{} {}", out_2[i], comp_block_2[i]);
+            assert_approx_eq::assert_approx_eq!(out_2[i], comp_block_2[i], 0.00001);
+        }
+    }
+
+    #[test]
+    fn test_asr_envelope_set_params () {
+        let test_block: [f32; 128] = [1.0; 128];
+        
+        // half a block attack, one block sustain, half a block release ... 2 blocks total .
+        let mut env = ASREnvelope::new(44100.0, 0.0, 0.0, 0.0, 0.0);
+
+        // use paramter setter to set parameters ...        
+        env.set_parameter(SynthParameter::Attack, 0.0014512);
+        env.set_parameter(SynthParameter::Sustain, 0.0029024);
+        env.set_parameter(SynthParameter::Release, 0.0014512);
+        env.set_parameter(SynthParameter::Level, 0.5);
+        
+        let out_1: [f32; 128] = env.process_block(test_block, 0);
+        let out_2: [f32; 128] = env.process_block(test_block, 0);
+
+        // comparison
+        let mut comp_block_1: [f32; 128] = [0.0; 128];
+        let mut comp_block_2: [f32; 128] = [0.0; 128];
+
+        let mut gain = 0.0;
+        let gain_inc_dec = 0.5 / 64.0;
+        
         // fill comp blocks
         for i in 0..64 {
             comp_block_1[i] = test_block[i] * gain;
