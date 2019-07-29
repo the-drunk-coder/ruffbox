@@ -190,7 +190,32 @@ impl Ruffbox {
 mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
+    use std::f32::consts::PI;
+    
+    #[test]
+    fn test_sine_synth_at_block_start() {
+        let mut ruff = Ruffbox::new();
 
+        let inst = ruff.prepare_instance(SourceType::SineOsc, 0.0, 0);
+        ruff.set_instance_parameter(inst, SynthParameter::PitchFrequency, 440.0);
+        ruff.set_instance_parameter(inst, SynthParameter::Level, 1.0);
+        ruff.set_instance_parameter(inst, SynthParameter::Duration, 1.0);
+        
+        ruff.trigger(inst);
+        
+        let out_1 = ruff.process(0.0);
+        let mut comp_1 = [0.0; 128];
+
+        for i in 0..128 {
+            comp_1[i] = (2.0 * PI * 440.0 * (i as f32 * (1.0 / 44100.0))).sin()
+        }
+        
+        for i in 0..128 {
+            //println!("{} {} {}; ", i, out_1[i], comp_1[i]);
+            assert_approx_eq::assert_approx_eq!(out_1[i], comp_1[i], 0.00001);
+        }
+    }
+    
     #[test]
     fn test_basic_playback() {
         
