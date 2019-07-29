@@ -26,7 +26,7 @@ impl ASREnvelope {
         let sus_samples = atk_samples + (samplerate * sus).round();
         let rel_samples = sus_samples + (samplerate * rel).round();
 
-        println!("atk sam: {} sus sam: {} rel sam: {}", atk_samples.round(), sus_samples.round(), rel_samples.round());
+        //println!("atk sam: {} sus sam: {} rel sam: {}", atk_samples.round(), sus_samples.round(), rel_samples.round());
         
         ASREnvelope {
             samplerate: samplerate,
@@ -99,13 +99,15 @@ impl Effect for ASREnvelope {
             if self.rel_lvl_decrement != 0.0 && !self.rel_lvl_decrement.is_normal() {
                 self.rel_lvl_decrement = 0.0;
             }
+
             
-            println!("atk sam: {} sus sam: {} rel sam: {} atk inc: {} rel dec: {}",
-                     self.atk_samples,
-                     self.sus_samples,
-                     self.rel_samples,
-                     self.atk_lvl_increment,
-                     self.rel_lvl_decrement);
+            // println!("atk sam: {} sus sam: {} rel sam: {} atk inc: {} rel dec: {}",
+            //        self.atk_samples,
+            //        self.sus_samples,
+            //        self.rel_samples,
+            //        self.atk_lvl_increment,
+            //        self.rel_lvl_decrement);
+             
         }
     }
     
