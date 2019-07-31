@@ -106,12 +106,13 @@ impl Ruffbox {
 
         // add new instances
         for new_event in self.new_instances_q_rec.try_iter() {
-            if new_event.timestamp == 0.0 {
+            if new_event.timestamp == 0.0 || new_event.timestamp == self.now {
                 self.running_instances.push(new_event.source);                
-            } else if new_event.timestamp <= self.now { // late events 
+            } else if new_event.timestamp < self.now { // late events 
                 self.running_instances.push(new_event.source);
                 // how to send out a late message ??
-            } else  {
+                // println!("late");
+            } else {
                 self.pending_events.push(new_event);
             }            
         }
@@ -121,7 +122,7 @@ impl Ruffbox {
         let block_end = stream_time + self.block_duration;
         
         // fetch event if it belongs to this block, if any ...
-        while !self.pending_events.is_empty() && self.pending_events.last().unwrap().timestamp <= block_end {
+        while !self.pending_events.is_empty() && self.pending_events.last().unwrap().timestamp < block_end {
 
             let mut current_event = self.pending_events.pop().unwrap();
 
@@ -369,5 +370,28 @@ mod tests {
         for i in 0..9 {
             assert_eq!(out_buf[33 + i], sample2[i]);
         }
+    }
+
+    #[test]
+    fn test_late_playback() {
+        
+        let mut ruff = Ruffbox::new();
+
+        let sample1 = [0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
+                
+        let bnum1 = ruff.load_sample(&sample1);        
+        
+        ruff.process(0.0);
+
+        let inst_1 = ruff.prepare_instance(SourceType::Sampler, 0.1, bnum1);
+        
+        ruff.trigger(inst_1);
+
+        // process after the instance's trigger time
+        let out_buf = ruff.process(0.101);
+        
+        for i in 0..9 {
+            assert_eq!(out_buf[i], sample1[i]);
+        }        
     }
 }
