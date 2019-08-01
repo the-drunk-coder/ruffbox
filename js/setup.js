@@ -147,14 +147,14 @@ if (ctx.audioWorklet === undefined) {
 	    const bdTrig = document.getElementById('bassdrum-trigger')
 	    bdTrig.addEventListener('change', e => {				
 		if (e.target.value === 1) {
-		    n.port.postMessage({ type: 'trigger', event : { source_type : "Sampler", sample_id: 'bd', timestamp: 0.0 }})
+		    n.port.postMessage({ type: 'trigger', event : { source_type : "Sampler", sample_id: 'bd', timestamp: 0.0, params: {}}})
 		}
 	    })
 
 	    const snTrig = document.getElementById('snare-trigger')
 	    snTrig.addEventListener('change', e => {				
 		if (e.target.value === 1) {
-		    n.port.postMessage({ type: 'trigger', event : { source_type : "Sampler", sample_id: 'sn', timestamp: 0.0 }})
+		    n.port.postMessage({ type: 'trigger', event : { source_type : "Sampler", sample_id: 'sn', timestamp: 0.0, params: {}}})
 		}
 	    })
 	  
