@@ -3,7 +3,6 @@ extern crate lazy_static;
 
 use parking_lot::Mutex;
 
-
 #[cfg(feature = "wee_alloc")]
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;

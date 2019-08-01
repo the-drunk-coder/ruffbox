@@ -117,6 +117,14 @@ impl Ruffbox {
             }            
         }
 
+        // handle already running instances
+        for running_inst in self.running_instances.iter_mut() {
+            let block = running_inst.get_next_block(0);
+            for s in 0..128 {
+                out_buf[s] += block[s];
+            }
+        }
+        
         // sort new events by timestamp, order of already sorted elements doesn't matter
         self.pending_events.sort_unstable_by(|a, b| b.cmp(a));
         let block_end = stream_time + self.block_duration;
@@ -128,6 +136,7 @@ impl Ruffbox {
 
             // calculate precise timing
             let sample_offset = (current_event.timestamp - stream_time) / self.sec_per_sample;           
+
             let block = current_event.source.get_next_block(sample_offset.round() as usize);
             for s in 0..128 {
                 out_buf[s] += block[s];
@@ -139,15 +148,7 @@ impl Ruffbox {
                 self.running_instances.push(current_event.source);
             }
         }
-        
-        // handle already running instances
-        for running_inst in self.running_instances.iter_mut() {
-            let block = running_inst.get_next_block(0);
-            for s in 0..128 {
-                out_buf[s] += block[s];
-            }
-        }
-        
+                        
         out_buf
     }
 
