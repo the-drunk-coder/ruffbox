@@ -2,6 +2,9 @@
 extern crate stdweb;
 extern crate web_sys;
 
+use js_sys::Math;
+//use rand::seq::SliceRandom; // 0.6.5
+
 use wasm_bindgen::prelude::*;
 
 use std::collections::HashMap;
@@ -39,6 +42,7 @@ struct EventSequence {
     events: Vec<(String, HashMap<String, f32>)>,
     param_rows: HashMap<String, ParamRow>,
     idx: usize,
+    rng: rand::rngs::OsRng,
 }
 
 impl EventSequence {
@@ -99,6 +103,7 @@ impl EventSequence {
             events: seq,
             param_rows: param_row_map,
             idx: 0,
+            rng: rand::rngs::OsRng,
         }
     }
 
@@ -129,16 +134,27 @@ impl EventSequence {
 
         // for now only cycle mode ...
         let mut final_param_map: HashMap<String, f32> = HashMap::new();
+        // only for non-empty events ...
         if event_name != "~" {
             for (k, v) in self.param_rows.iter_mut() {
 
-                final_param_map.insert(k.to_string(), v.values[v.idx]);
+                match v.mode {
+                    ParamRowMode::Cycle => {
+                        final_param_map.insert(k.to_string(), v.values[v.idx]);
                 
-                if v.idx + 1 == v.values.len() {
-                    v.idx = 0;
-                } else {
-                    v.idx += 1;
-                }
+                        if v.idx + 1 == v.values.len() {
+                            v.idx = 0;
+                        } else {
+                            v.idx += 1;
+                        }
+                    },
+                    ParamRowMode::Random => {
+                        // why do i need to dereference here ?
+                        let rnd_idx = Math::random() * v.values.len() as f64 - 1.0;
+                        final_param_map.insert(k.to_string(), v.values[rnd_idx.round() as usize]);
+                    },
+                };
+                
             }
         }
         
@@ -163,7 +179,7 @@ pub struct Scheduler {
     next_schedule_time: f64,
     lookahead: f64, // in seconds
     running: bool,
-    tempo: f64, // currently just the duration of a 16th note ... 
+    tempo: f64, // currently just the duration of a 16th note ...
     event_sequences: Vec<EventSequence>,
 }
 
