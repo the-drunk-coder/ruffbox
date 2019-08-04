@@ -42,7 +42,6 @@ struct EventSequence {
     events: Vec<(String, HashMap<String, f32>)>,
     param_rows: HashMap<String, ParamRow>,
     idx: usize,
-    rng: rand::rngs::OsRng,
 }
 
 impl EventSequence {
@@ -103,7 +102,6 @@ impl EventSequence {
             events: seq,
             param_rows: param_row_map,
             idx: 0,
-            rng: rand::rngs::OsRng,
         }
     }
 
@@ -206,12 +204,12 @@ impl Scheduler {
                 let mut seq_idx = 0;
 
                 for line in all_lines.lines() {
-                    
-                    if !line.trim().is_empty() {
+                    let trimmed_line = line.trim();
+                    if !trimmed_line.is_empty() && !trimmed_line.starts_with("#") {
                         if self.event_sequences.len() > seq_idx {
-                            self.event_sequences[seq_idx].update_sequence(line.trim().to_string());
+                            self.event_sequences[seq_idx].update_sequence(trimmed_line.to_string());
                         } else {
-                            self.event_sequences.push(EventSequence::from_string(line.trim().to_string()));
+                            self.event_sequences.push(EventSequence::from_string(trimmed_line.to_string()));
                         }
                         seq_idx += 1;                        
                     }
