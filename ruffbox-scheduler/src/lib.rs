@@ -13,23 +13,46 @@ macro_rules! log {
     }
 }
 
+pub enum ParamRowMode {
+    Cycle,
+    Random,
+}
+
+struct ParamRow {
+    mode: ParamRowMode,
+    idx: usize,
+    values: Vec<f32>,
+}
+
+impl ParamRow {
+    pub fn new(mode: ParamRowMode) -> Self {
+        ParamRow {
+            mode: mode,
+            idx: 0,
+            values: Vec::new(),
+        }
+    }
+}
+
 /// A simple event sequence represented by a vector of strings and params
 struct EventSequence {
     events: Vec<(String, HashMap<String, f32>)>,
+    param_rows: HashMap<String, ParamRow>,
     idx: usize,
 }
 
 impl EventSequence {
 
-    /// Create an event sequence from a string.
-    pub fn from_string(input_line: String) -> Self {
+    fn parse_string(input_line: String) -> (Vec<(String, HashMap<String, f32>)>, HashMap<String, ParamRow>) {
         let mut seq = Vec::new();
-        
-        let iter = input_line.split_ascii_whitespace();
+        // split basic pattern and parameter lists
+        let mut pattern_with_modifiers: Vec<&str> = input_line.split("@").collect();
+
+        // "parse" pattern
+        let iter = pattern_with_modifiers.remove(0).split_ascii_whitespace();
         
         for event in iter {            
-            let event_with_params: Vec<&str> = event
-                .split(":").collect();
+            let event_with_params: Vec<&str> = event.split(";").collect();
             
             let event_type = event_with_params[0];
             let mut param_map = HashMap::new();
@@ -42,31 +65,49 @@ impl EventSequence {
             seq.push((event_type.to_string(), param_map));
         }
 
+        let mut param_row_map = HashMap::new();
+        
+        // "parse" parameter lists
+        for param_mod in pattern_with_modifiers.iter() {            
+
+            let param_mods: Vec<&str> = param_mod.split(":").collect();
+
+            let param = param_mods[0];
+            let mut param_info : Vec<&str> =  param_mods[1].split_ascii_whitespace().collect();
+
+            let mut param_row = ParamRow::new(match param_info.remove(0) {
+                "cyc" => ParamRowMode::Cycle,
+                "rnd" => ParamRowMode::Random,
+                _ => ParamRowMode::Cycle,
+            });
+                                    
+            for val in param_info {
+                param_row.values.push(val.parse().unwrap());
+            }
+
+            param_row_map.insert(param.to_string(), param_row);
+        }
+        
+        (seq, param_row_map)
+    }
+
+    /// Create an event sequence from a string.
+    pub fn from_string(input_line: String) -> Self {
+        let (seq, param_row_map) = EventSequence::parse_string(input_line);
+
         EventSequence {
             events: seq,
+            param_rows: param_row_map,
             idx: 0,
         }
     }
 
     /// Update an existing sequence from a string.
     pub fn update_sequence(&mut self, input_line: String) {
-        self.events.clear();
+        let (seq, param_row_map) = EventSequence::parse_string(input_line);
 
-        let iter = input_line.split_ascii_whitespace();
-
-        for event in iter {            
-            let event_with_params: Vec<&str> = event.split(":").collect();
-            
-            let event_type = event_with_params[0];
-            let mut param_map = HashMap::new();
-
-            for par in &event_with_params[1..] {
-                let par_val: Vec<&str> = par.split("=").collect();
-                param_map.insert(par_val[0].to_string(), par_val[1].parse().unwrap());
-            }
-            
-            self.events.push((event_type.to_string(), param_map));
-        }
+        self.events = seq;
+        self.param_rows = param_row_map;
         
         if self.idx >= self.events.len() {
             self.idx = self.events.len() - 1;
@@ -74,10 +115,7 @@ impl EventSequence {
     }
 
     /// get the next event in the sequence
-    pub fn get_next_event(&mut self) -> &(String, HashMap<String, f32>) {
-        if self.events.is_empty() {
-            "~".to_string();
-        }
+    pub fn get_next_event(&mut self) -> (String, HashMap<String, f32>) {
         
         let cur_idx = self.idx;
 
@@ -87,7 +125,29 @@ impl EventSequence {
             self.idx += 1;
         }
         
-        &self.events[cur_idx]        
+        let (event_name, event_params) = &self.events[cur_idx];
+
+        // for now only cycle mode ...
+        let mut final_param_map: HashMap<String, f32> = HashMap::new();
+        if event_name != "~" {
+            for (k, v) in self.param_rows.iter_mut() {
+
+                final_param_map.insert(k.to_string(), v.values[v.idx]);
+                
+                if v.idx + 1 == v.values.len() {
+                    v.idx = 0;
+                } else {
+                    v.idx += 1;
+                }
+            }
+        }
+        
+        // merge in event params (explicit event param overwrites modifier)
+        for (k, v) in event_params.iter() {
+            final_param_map.insert(k.to_string(), *v);
+        }
+        
+        (event_name.to_string(), final_param_map)
     }
 }
 
@@ -159,15 +219,15 @@ impl Scheduler {
         let trigger_time = self.audio_logical_time + self.lookahead;
         
         for seq in self.event_sequences.iter_mut() {
-
+            
             let (next_event, next_params) = seq.get_next_event();
-
-            let next_source_type = match next_event.as_ref() {
+            
+            let next_source_type = match next_event.as_str() {
                 "sine" => "SineSynth",
                 "saw" => "LFSawSynth",
                 _ => "Sampler",
             };
-                        
+                                                           
             if next_event != "~" {
                 // post events that will be dispatched to sampler
                 js! {                
