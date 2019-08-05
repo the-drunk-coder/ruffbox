@@ -12,6 +12,7 @@ pub struct Sampler {
     index: usize,
     frac_index: f32,
     buffer_ref: Arc<Vec<f32>>,
+    buffer_len: usize,
     playback_rate: f32,
     frac_index_increment: f32,
     state: SynthState,
@@ -20,9 +21,10 @@ pub struct Sampler {
 impl Sampler {    
     pub fn with_buffer_ref(buf: &Arc<Vec<f32>>) -> Sampler {        
         Sampler {
-            index: 0,
+            index: 1, // start with one to account for interpolation
             frac_index: 0.0,
-            buffer_ref: buf.clone(), // just the reference is cloned, not the whole buffer ! 
+            buffer_ref: buf.clone(), // just the reference is cloned, not the whole buffer !
+            buffer_len: buf.len() - 3, // to account for interpolation
             playback_rate: 1.0,
             frac_index_increment: 1.0,
             state: SynthState::Fresh,
@@ -35,7 +37,7 @@ impl Sampler {
         for i in start_sample..128 {            
             out_buf[i] = self.buffer_ref[self.index];
             
-            if (self.index + 1) < self.buffer_ref.len() {
+            if self.index < self.buffer_len {
                 self.index = self.index + 1;
             } else {
                 self.finish();
@@ -55,19 +57,19 @@ impl Sampler {
             let idx_u = idx as usize;
 
             // 4-point, 3rd-order Hermite
-            let y_m1 = if idx_u == 0 { 0.0 } else { self.buffer_ref[idx_u - 1] };
-            let y_0 =  self.buffer_ref[idx_u] ;
-            let y_1 = if idx_u >= self.buffer_ref.len() - 1 { 0.0 } else { self.buffer_ref[idx_u + 1] };
-            let y_2 = if idx_u >= self.buffer_ref.len() - 2 { 0.0 } else { self.buffer_ref[idx_u + 2] };
+            let y_m1 = self.buffer_ref[idx_u - 1];
+            let y_0 = self.buffer_ref[idx_u];
+            let y_1 = self.buffer_ref[idx_u + 1];
+            let y_2 = self.buffer_ref[idx_u + 2];
 
             let c0 = y_0;
             let c1 = 0.5 * (y_1 - y_m1);
-            let c2 = y_m1 - 2.5 * y_0 + 2.0 * y_1 - 0.5 * y_2;
+            let c2 =  - 2.5 * y_0 + 2.0 * y_1 - 0.5 * y_2;
             let c3 = 0.5 * (y_2 - y_m1) + 1.5 * (y_0 - y_1);
             
             out_buf[i] = ((c3 * frac + c2) * frac + c1) * frac + c0;
                         
-            if ((self.frac_index + self.frac_index_increment) as usize) < self.buffer_ref.len() {                
+            if ((self.frac_index + self.frac_index_increment) as usize) < self.buffer_len {                
                 self.frac_index = self.frac_index + self.frac_index_increment;
             } else {
                 self.finish();

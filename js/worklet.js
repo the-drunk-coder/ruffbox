@@ -8,18 +8,20 @@ class RuffboxProcessor extends AudioWorkletProcessor {
 	if(!this._sampleBuffers){
 	    this._sampleBuffers = [];
 	}
+
+	let sampleSizeForInterpolation = sampleSize + 3;
 	
-	let samplePtr = this._wasm.exports.alloc()	
+	let samplePtr = this._wasm.exports.alloc(sampleSizeForInterpolation);	
 	let sampleBuf = new Float32Array (
 	    this._wasm.exports.memory.buffer,
 	    samplePtr,
-	    sampleSize
+	    sampleSizeForInterpolation // to facilitate interpolation
 	)	
 	
-	// copy to wasm buffer 
-	sampleBuf.set(sampleData);
+	// copy to wasm buffer, offset one for interpolation
+	sampleBuf.set(sampleData, 1);
 	//console.log("LOADED size: " + sampleSize + " -- data: " + sampleData );
-	let bufNum = this._wasm.exports.load(samplePtr, sampleSize);
+	let bufNum = this._wasm.exports.load(samplePtr, sampleSizeForInterpolation);
 
 	if(!this._sampleMapping) {
 	    this._sampleMapping = {};
@@ -27,7 +29,7 @@ class RuffboxProcessor extends AudioWorkletProcessor {
 
 	this._sampleMapping[id] = bufNum;
 		
-	this._sampleBuffers.push([samplePtr, sampleBuf, sampleSize]);	
+	this._sampleBuffers.push([samplePtr, sampleBuf, sampleSizeForInterpolation]);	
     }
         
     constructor(options) {
