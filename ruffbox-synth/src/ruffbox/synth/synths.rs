@@ -14,7 +14,7 @@ pub struct SineSynth {
 impl SineSynth {
     pub fn new(sr: f32) -> Self {
         SineSynth {
-            oscillator: SineOsc::new(440.0, 0.3, 0.3, sr),
+            oscillator: SineOsc::new(440.0, 0.3, sr),
             envelope: ASREnvelope::new(sr, 0.3, 0.05, 0.1, 0.05),
         }
     }

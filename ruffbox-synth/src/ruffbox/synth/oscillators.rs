@@ -1,5 +1,4 @@
 use crate::ruffbox::synth::Source;
-use crate::ruffbox::synth::SynthState;
 use crate::ruffbox::synth::SynthParameter;
 
 use std::f32::consts::PI;
@@ -7,32 +6,22 @@ use std::f32::consts::PI;
 /**
  * A simple sine oscillator
  */
-pub struct SineOsc {
-    //freq: f32,
-    lvl: f32,
-    //samplerate: f32,
-    dur: f32,
-    //dur_samples: f32,
+pub struct SineOsc {   
+    lvl: f32,    
     sin_time: f32,
     sin_delta_time: f32,
     pi_slice: f32,
     sample_count: u64,
-    state: SynthState,
 }
 
 impl SineOsc {    
-    pub fn new(freq: f32, lvl: f32, dur: f32, sr: f32) -> Self {
+    pub fn new(freq: f32, lvl: f32, sr: f32) -> Self {
         SineOsc {
-            //freq: freq,
-            lvl: lvl,
-            //samplerate: sr,
-            dur: dur,
-            //dur_samples: dur * sr,
+            lvl: lvl,            
             sin_time: 0.0,
             sin_delta_time: 1.0 / sr,
             pi_slice: 2.0 * PI * freq,
             sample_count: 0,
-            state: SynthState::Fresh,            
         }
     }
 }
@@ -43,21 +32,17 @@ impl Source for SineOsc {
     fn set_parameter(&mut self, par: SynthParameter, value: f32) {
         match par {
             SynthParameter::PitchFrequency => self.pi_slice = 2.0 * PI * value,
-            SynthParameter::Duration => self.dur = value,
             SynthParameter::Level => self.lvl = value, 
             _ => (),
         };
     }
     
     fn finish(&mut self) {
-        self.state = SynthState::Finished;
+        //self.state = SynthState::Finished;
     }
 
     fn is_finished(&self) -> bool {
-        match self.state {
-            SynthState::Finished => true,
-            _ => false,
-        }
+        false        
     }
 
     fn get_next_block(&mut self, start_sample: usize) -> [f32; 128] {
@@ -66,10 +51,7 @@ impl Source for SineOsc {
         for i in start_sample..128 {
             out_buf[i] = (self.pi_slice * self.sin_delta_time * self.sample_count as f32).sin() * self.lvl;
             self.sample_count += 1;
-            self.sin_time += self.sin_delta_time;
-            if self.sin_time >= self.dur {
-                self.finish();
-            }
+            self.sin_time += self.sin_delta_time;            
         }
 
         out_buf
@@ -87,7 +69,6 @@ pub struct LFSaw {
     lvl_inc: f32,
     cur_lvl: f32,
     period_count: usize,
-    //state: SynthState,
 }
 
 impl LFSaw {    
@@ -99,8 +80,7 @@ impl LFSaw {
             period_samples: (sr / freq).round() as usize,
             lvl_inc: (2.0 * lvl) / (sr / freq).round(),
             cur_lvl: -1.0 * lvl,                       
-            period_count: 0,
-            //state: SynthState::Fresh,            
+            period_count: 0,         
         }
     }
 }
@@ -123,9 +103,7 @@ impl Source for LFSaw {
         };
     }
     
-    fn finish(&mut self) {
-       //self.state = SynthState::Finished;
-    }
+    fn finish(&mut self) {}
     
     fn is_finished(&self) -> bool {
         false
@@ -157,7 +135,7 @@ mod tests {
 
     #[test]
     fn sine_osc_test_at_block_start() {
-        let mut osc = SineOsc::new(440.0, 1.0, 1.5, 44100.0);
+        let mut osc = SineOsc::new(440.0, 1.0, 44100.0);
 
         let out_1 = osc.get_next_block(0);
         let mut comp_1 = [0.0; 128];
@@ -174,7 +152,7 @@ mod tests {
 
     #[test]
     fn sine_osc_test_start_in_block() {
-        let mut osc = SineOsc::new(440.0, 1.0, 1.5, 44100.0);
+        let mut osc = SineOsc::new(440.0, 1.0, 44100.0);
 
         let start_time:f32 = 0.001;
 
@@ -196,7 +174,7 @@ mod tests {
     
     #[test]
     fn sine_osc_test_multiple_blocks() {
-        let mut osc = SineOsc::new(440.0, 1.0, 1.5, 44100.0);
+        let mut osc = SineOsc::new(440.0, 1.0, 44100.0);
 
         let out_1 = osc.get_next_block(0);
         let out_2 = osc.get_next_block(0);
