@@ -1,5 +1,6 @@
 pub mod sampler;
 pub mod envelopes;
+pub mod routing;
 pub mod oscillators;
 pub mod synths;
 pub mod filters;

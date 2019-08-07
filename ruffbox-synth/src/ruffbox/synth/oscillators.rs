@@ -27,7 +27,6 @@ impl SineOsc {
 }
 
 impl Source for SineOsc {
-
     // some parameter limits might be nice ... 
     fn set_parameter(&mut self, par: SynthParameter, value: f32) {
         match par {

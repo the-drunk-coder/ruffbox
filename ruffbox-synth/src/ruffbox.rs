@@ -15,6 +15,7 @@ use crate::ruffbox::synth::SynthParameter;
 use crate::ruffbox::synth::SourceType;
 use crate::ruffbox::synth::sampler::Sampler;
 use crate::ruffbox::synth::oscillators::SineOsc;
+use crate::ruffbox::synth::routing::Balance2;
 use crate::ruffbox::synth::synths::*;
 
 /// timed event, to be created in the trigger method, then 

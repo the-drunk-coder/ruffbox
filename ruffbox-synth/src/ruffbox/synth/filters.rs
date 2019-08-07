@@ -1,5 +1,4 @@
 use crate::ruffbox::synth::Effect;
-//use crate::ruffbox::synth::SynthState;
 use crate::ruffbox::synth::SynthParameter;
 
 /**
@@ -26,7 +25,6 @@ pub struct Lpf18 {
     value: f32,
     aout: f32,
     lastin: f32,
-    //sample_duration: f32,
     samplerate: f32,
 }
 
@@ -55,7 +53,6 @@ impl Lpf18 {
             value: value,
             aout: 0.0,
             lastin: 0.0,
-            //sample_duration: 1.0 / sr,
             samplerate: sr,
         }
     }
@@ -65,9 +62,9 @@ impl Effect for Lpf18 {
     // some parameter limits might be nice ... 
     fn set_parameter(&mut self, par: SynthParameter, value: f32) {
         match par {
-            SynthParameter::LowpassCutoffFrequency => self.cutoff = value,                            
+            SynthParameter::LowpassCutoffFrequency => self.cutoff = value, 
             SynthParameter::LowpassQFactor => self.res = value,
-            SynthParameter::LowpassFilterDistortion => self.dist = value,            
+            SynthParameter::LowpassFilterDistortion => self.dist = value,
             _ => (),
         };
 
