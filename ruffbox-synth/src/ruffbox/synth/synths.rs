@@ -20,7 +20,7 @@ pub struct SineSynth {
 impl SineSynth {
     pub fn new(sr: f32) -> Self {
         SineSynth {
-            oscillator: SineOsc::new(440.0, 0.3, sr),
+            oscillator: SineOsc::new(440.0, 0.5, sr),
             envelope: ASREnvelope::new(sr, 0.3, 0.05, 0.1, 0.05),
             balance: Balance2::new(),
         }
@@ -60,9 +60,9 @@ pub struct LFSawSynth {
 impl LFSawSynth {
     pub fn new(sr: f32) -> Self {
         LFSawSynth {
-            oscillator: LFSaw::new(100.0, 0.3, sr),
-            filter: Lpf18::new(200.0, 0.5, 0.1, sr),
-            envelope: ASREnvelope::new(sr, 0.3, 0.05, 0.1, 0.05),
+            oscillator: LFSaw::new(100.0, 0.8, sr),
+            filter: Lpf18::new(1500.0, 0.5, 0.1, sr),
+            envelope: ASREnvelope::new(sr, 1.0, 0.002, 0.02, 0.08),
             balance: Balance2::new(),
         }
     }
@@ -94,7 +94,7 @@ impl StereoSynth for LFSawSynth {
 
 /// a sinusoidal synth with envelope etc.
 pub struct StereoSampler {
-    sampler: Sampler,    
+    sampler: Sampler,
     balance: Balance2,
 }
 
@@ -110,7 +110,7 @@ impl StereoSampler {
 impl StereoSynth for StereoSampler {
     fn set_parameter(&mut self, par: SynthParameter, val: f32) {
         self.sampler.set_parameter(par, val);        
-        self.balance.set_parameter(par, val);
+        self.balance.set_parameter(par, val);        
     }
 
     fn finish(&mut self) {
