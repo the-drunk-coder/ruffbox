@@ -10,12 +10,9 @@ use std::collections::HashMap;
 use std::cmp::Ordering;
 use std::sync::Arc;
 
-use crate::ruffbox::synth::Source;
+use crate::ruffbox::synth::StereoSynth;
 use crate::ruffbox::synth::SynthParameter;
 use crate::ruffbox::synth::SourceType;
-use crate::ruffbox::synth::sampler::Sampler;
-use crate::ruffbox::synth::oscillators::SineOsc;
-use crate::ruffbox::synth::routing::Balance2;
 use crate::ruffbox::synth::synths::*;
 
 /// timed event, to be created in the trigger method, then 
@@ -23,7 +20,7 @@ use crate::ruffbox::synth::synths::*;
 /// or pushed to the pending queue ...
 struct ScheduledEvent {
     timestamp: f64,
-    source: Box<dyn Source + Send>,
+    source: Box<dyn StereoSynth + Send>,
 }
 
 impl Ord for ScheduledEvent {
@@ -54,7 +51,7 @@ impl Eq for ScheduledEvent {}
 
 // constructor implementation
 impl ScheduledEvent {
-    pub fn new(ts: f64, src: Box<dyn Source + Send>) -> Self {
+    pub fn new(ts: f64, src: Box<dyn StereoSynth + Send>) -> Self {
         ScheduledEvent {
             timestamp: ts,
             source: src,
@@ -68,7 +65,7 @@ impl ScheduledEvent {
 
 /// the main synth instance
 pub struct Ruffbox {
-    running_instances: Vec<Box<dyn Source + Send>>,
+    running_instances: Vec<Box<dyn StereoSynth + Send>>,
     pending_events: Vec<ScheduledEvent>,
     buffers: Vec<Arc<Vec<f32>>>,
     prepared_instance_map: HashMap<usize, ScheduledEvent>,
@@ -98,8 +95,8 @@ impl Ruffbox {
         }
     }
            
-    pub fn process(&mut self, stream_time: f64) -> [f32; 128] {        
-        let mut out_buf: [f32; 128] = [0.0; 128];
+    pub fn process(&mut self, stream_time: f64) -> [[f32; 128]; 2] {        
+        let mut out_buf: [[f32; 128]; 2] = [[0.0; 128]; 2];
         self.now = stream_time;
         
         // remove finished instances ...
@@ -122,7 +119,8 @@ impl Ruffbox {
         for running_inst in self.running_instances.iter_mut() {
             let block = running_inst.get_next_block(0);
             for s in 0..128 {
-                out_buf[s] += block[s];
+                out_buf[0][s] += block[0][s];
+                out_buf[1][s] += block[1][s];
             }
         }
         
@@ -139,10 +137,12 @@ impl Ruffbox {
             let sample_offset = (current_event.timestamp - stream_time) / self.sec_per_sample;           
 
             let block = current_event.source.get_next_block(sample_offset.round() as usize);
-            for s in 0..128 {
-                out_buf[s] += block[s];
-            }
 
+            for s in 0..128 {
+                out_buf[0][s] += block[0][s];
+                out_buf[1][s] += block[1][s];
+            }
+            
             // if length of sample event is longer than the rest of the block,
             // add to running instances
             if !current_event.source.is_finished() {
@@ -158,9 +158,9 @@ impl Ruffbox {
         let instance_id = self.instance_counter.fetch_add(1);
 
         let scheduled_event = match src_type {
-            SourceType::SineOsc => ScheduledEvent::new(timestamp, Box::new(SineOsc::new(440.0, 0.2, 44100.0))),
+            SourceType::SineOsc => ScheduledEvent::new(timestamp, Box::new(SineSynth::new(44100.0))),
             SourceType::SineSynth => ScheduledEvent::new(timestamp, Box::new(SineSynth::new(44100.0))),
-            SourceType::Sampler => ScheduledEvent::new(timestamp, Box::new(Sampler::with_buffer_ref(&self.buffers[sample_buf]))),
+            SourceType::Sampler => ScheduledEvent::new(timestamp, Box::new(StereoSampler::with_buffer_ref(&self.buffers[sample_buf]))),
             SourceType::LFSawSynth => ScheduledEvent::new(timestamp, Box::new(LFSawSynth::new(44100.0))),
         };
 

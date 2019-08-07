@@ -7,8 +7,7 @@ pub struct Balance2 {
 }
 
 impl Balance2 {
-
-    fn new() -> Self {
+    pub fn new() -> Self {
         let bal:f32 = 0.5;
         let bal_sqrt = bal.sqrt();
         Balance2 {            
@@ -18,7 +17,7 @@ impl Balance2 {
     }
     
     /// some parameter limits might be nice ... 
-    fn set_parameter(&mut self, par: SynthParameter, value: f32) {
+    pub fn set_parameter(&mut self, par: SynthParameter, value: f32) {
         match par {
             SynthParameter::StereoPosition => {
                 let angle_rad = -1.0 * value * PI * 0.25;
@@ -32,7 +31,7 @@ impl Balance2 {
         };
     }
     /// pan mono to stereo
-    fn process_block(&mut self, block: [f32; 128]) -> [[f32; 128]; 2] {
+    pub fn process_block(&mut self, block: [f32; 128]) -> [[f32; 128]; 2] {
         let mut out_buf = [[0.0; 128]; 2];
         for i in 0..128 {
             out_buf[0][i] = block[i] * self.left_level;

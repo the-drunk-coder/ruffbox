@@ -29,8 +29,8 @@ pub extern "C" fn process(out_ptr_l: *mut f32, out_ptr_r: *mut f32, size: usize,
     // mono for now ... 
     let out = ruff.process(stream_time);
     for i in 0..128 {
-        out_buf_l[i] = out[i];
-        out_buf_r[i] = out[i];
+        out_buf_l[i] = out[0][i];
+        out_buf_r[i] = out[1][i];
     }    
 }
 
