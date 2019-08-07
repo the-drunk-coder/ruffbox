@@ -157,7 +157,7 @@ impl Ruffbox {
         let instance_id = self.instance_counter.fetch_add(1);
 
         let scheduled_event = match src_type {
-            SourceType::SineOsc => ScheduledEvent::new(timestamp, Box::new(SineOsc::new(440.0, 0.2, 0.3, 44100.0))),
+            SourceType::SineOsc => ScheduledEvent::new(timestamp, Box::new(SineOsc::new(440.0, 0.2, 44100.0))),
             SourceType::SineSynth => ScheduledEvent::new(timestamp, Box::new(SineSynth::new(44100.0))),
             SourceType::Sampler => ScheduledEvent::new(timestamp, Box::new(Sampler::with_buffer_ref(&self.buffers[sample_buf]))),
             SourceType::LFSawSynth => ScheduledEvent::new(timestamp, Box::new(LFSawSynth::new(44100.0))),
@@ -223,8 +223,9 @@ mod tests {
         
         let mut ruff = Ruffbox::new();
 
-        let sample1 = [0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
-        let sample2 = [0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0];
+        // first point and last two points are for eventual interpolation
+        let sample1 = [0.0, 0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0, 0.0, 0.0];
+        let sample2 = [0.0, 0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0, 0.0, 0.0];
         
         let bnum1 = ruff.load_sample(&sample1);
         let bnum2 = ruff.load_sample(&sample2);
@@ -240,7 +241,8 @@ mod tests {
         let out_buf = ruff.process(0.0);
         
         for i in 0..9 {
-            assert_eq!(out_buf[i], sample1[i] + sample2[i]);
+            //println!("{} {} ", out_buf[i], sample1[i + 1] + sample2[i + 1]);
+            assert_eq!(out_buf[i], sample1[i + 1] + sample2[i + 1]);
         }        
     }
 
@@ -251,8 +253,9 @@ mod tests {
         // block duration in seconds
         let block_duration = 0.00290249433;
 
-        let sample1 = [0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
-        let sample2 = [0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0];
+        // first point and last two points are for eventual interpolation
+        let sample1 = [0.0, 0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0, 0.0, 0.0];
+        let sample2 = [0.0, 0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0, 0.0, 0.0];
         
         let bnum1 = ruff.load_sample(&sample1);
         let bnum2 = ruff.load_sample(&sample2);
@@ -273,7 +276,7 @@ mod tests {
         let out_buf = ruff.process(stream_time);
                        
         for i in 0..9 {
-            assert_eq!(out_buf[33 + i], sample1[i] + sample2[i]);
+            assert_eq!(out_buf[33 + i], sample1[i + 1] + sample2[i + 1]);
         }        
     }
 
@@ -285,8 +288,8 @@ mod tests {
         let block_duration = 0.00290249433;
         let sec_per_sample = 0.00002267573;
         
-        let sample1 = [0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
-        let sample2 = [0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0];
+        let sample1 = [0.0, 0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0, 0.0, 0.0];
+        let sample2 = [0.0, 0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0, 0.0, 0.0];
         
         let bnum1 = ruff.load_sample(&sample1);
         let bnum2 = ruff.load_sample(&sample2);
@@ -306,17 +309,18 @@ mod tests {
         }
          
         let out_buf = ruff.process(stream_time);
-               
+
+        // offsets to account for interpolation
         for i in 0..4 {
-            assert_eq!(out_buf[33 + i], sample1[i]);
+            assert_eq!(out_buf[33 + i], sample1[i + 1]);
         }
 
         for i in 0..5 {
-            assert_eq!(out_buf[37 + i], sample1[i + 4] + sample2[i]);
+            assert_eq!(out_buf[37 + i], sample1[i + 4 + 1] + sample2[i + 1]);
         }
 
         for i in 0..4 {
-            assert_eq!(out_buf[42 + i], sample2[i + 5]);
+            assert_eq!(out_buf[42 + i], sample2[i + 5 + 1]);
         }
     }
 
@@ -327,8 +331,8 @@ mod tests {
         // block duration in seconds
         let block_duration = 0.00290249433;
         
-        let sample1 = [0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
-        let sample2 = [0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0];
+        let sample1 = [0.0, 0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0, 0.0, 0.0];
+        let sample2 = [0.0, 0.0, 0.01, 0.02, 0.03, 0.04, 0.03, 0.02, 0.01, 0.0, 0.0, 0.0];
         
         let bnum1 = ruff.load_sample(&sample1);
         let bnum2 = ruff.load_sample(&sample2);
@@ -357,7 +361,7 @@ mod tests {
         stream_time += block_duration;
                 
         for i in 0..9 {
-            assert_eq!(out_buf[33 + i], sample1[i]);
+            assert_eq!(out_buf[33 + i], sample1[i + 1]);
         }
         
         // calculate a few blocks more
@@ -369,7 +373,7 @@ mod tests {
         let out_buf = ruff.process(stream_time);
         
         for i in 0..9 {
-            assert_eq!(out_buf[33 + i], sample2[i]);
+            assert_eq!(out_buf[33 + i], sample2[i + 1]);
         }
     }
 
@@ -378,7 +382,7 @@ mod tests {
         
         let mut ruff = Ruffbox::new();
 
-        let sample1 = [0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0];
+        let sample1 = [0.0, 0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0, 0.0, 0.0];
                 
         let bnum1 = ruff.load_sample(&sample1);        
         
@@ -392,7 +396,7 @@ mod tests {
         let out_buf = ruff.process(0.101);
         
         for i in 0..9 {
-            assert_eq!(out_buf[i], sample1[i]);
+            assert_eq!(out_buf[i], sample1[i + 1]);
         }        
     }
 }
