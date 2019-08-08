@@ -16,6 +16,7 @@ pub struct Sampler {
     playback_rate: f32,
     frac_index_increment: f32,
     state: SynthState,
+    level: f32,
 }
 
 impl Sampler {    
@@ -28,6 +29,7 @@ impl Sampler {
             playback_rate: 1.0,
             frac_index_increment: 1.0,
             state: SynthState::Fresh,
+            level: 1.0,
         }
     }
 
@@ -35,7 +37,7 @@ impl Sampler {
         let mut out_buf: [f32; 128] = [0.0; 128];
 
         for i in start_sample..128 {            
-            out_buf[i] = self.buffer_ref[self.index];
+            out_buf[i] = self.buffer_ref[self.index] * self.level;
             
             if self.index < self.buffer_len {
                 self.index = self.index + 1;
@@ -67,7 +69,7 @@ impl Sampler {
             let c2 = y_m1 - 2.5 * y_0 + 2.0 * y_1 - 0.5 * y_2;
             let c3 = 0.5 * (y_2 - y_m1) + 1.5 * (y_0 - y_1);
             
-            out_buf[i] = ((c3 * frac + c2) * frac + c1) * frac + c0;
+            out_buf[i] = (((c3 * frac + c2) * frac + c1) * frac + c0) * self.level ;
                         
             if ((self.frac_index + self.frac_index_increment) as usize) < self.buffer_len {                
                 self.frac_index = self.frac_index + self.frac_index_increment;
@@ -87,6 +89,9 @@ impl Source for Sampler {
            SynthParameter::PlaybackRate => {
                self.playback_rate = value;
                self.frac_index_increment = 1.0 * value;
+           },
+           SynthParameter::Level => {
+               self.level = value;
            },
            _ => (),
         }; // tbd ...
