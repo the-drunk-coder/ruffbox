@@ -22,7 +22,7 @@ impl Sampler {
     pub fn with_buffer_ref(buf: &Arc<Vec<f32>>) -> Sampler {        
         Sampler {
             index: 1, // start with one to account for interpolation
-            frac_index: 0.0,
+            frac_index: 1.0,
             buffer_ref: buf.clone(), // just the reference is cloned, not the whole buffer !
             buffer_len: buf.len() - 3, // to account for interpolation
             playback_rate: 1.0,
@@ -64,7 +64,7 @@ impl Sampler {
 
             let c0 = y_0;
             let c1 = 0.5 * (y_1 - y_m1);
-            let c2 =  - 2.5 * y_0 + 2.0 * y_1 - 0.5 * y_2;
+            let c2 = y_m1 - 2.5 * y_0 + 2.0 * y_1 - 0.5 * y_2;
             let c3 = 0.5 * (y_2 - y_m1) + 1.5 * (y_0 - y_1);
             
             out_buf[i] = ((c3 * frac + c2) * frac + c1) * frac + c0;
