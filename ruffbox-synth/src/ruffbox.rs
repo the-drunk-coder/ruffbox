@@ -75,6 +75,7 @@ pub struct Ruffbox {
     block_duration: f64,
     sec_per_sample: f64,
     now: f64,
+    master_reverb: synth::reverb::StereoFreeverb,
 }
 
 impl Ruffbox {
@@ -92,11 +93,14 @@ impl Ruffbox {
             block_duration: 128.0 / 44100.0,
             sec_per_sample: 1.0 / 44100.0,
             now: 0.0,
+            master_reverb: synth::reverb::StereoFreeverb::new(),
         }
     }
            
     pub fn process(&mut self, stream_time: f64) -> [[f32; 128]; 2] {        
         let mut out_buf: [[f32; 128]; 2] = [[0.0; 128]; 2];
+        let mut master_reverb_in: [f32; 128] = [0.0; 128];
+
         self.now = stream_time;
         
         // remove finished instances ...
@@ -121,6 +125,8 @@ impl Ruffbox {
             for s in 0..128 {
                 out_buf[0][s] += block[0][s];
                 out_buf[1][s] += block[1][s];
+
+                master_reverb_in[s] += (block[0][s] + block[1][s]) * running_inst.reverb_level();                
             }
         }
         
@@ -141,6 +147,8 @@ impl Ruffbox {
             for s in 0..128 {
                 out_buf[0][s] += block[0][s];
                 out_buf[1][s] += block[1][s];
+                
+                master_reverb_in[s] += (block[0][s] + block[1][s]) * current_event.source.reverb_level();
             }
             
             // if length of sample event is longer than the rest of the block,
@@ -148,6 +156,13 @@ impl Ruffbox {
             if !current_event.source.is_finished() {
                 self.running_instances.push(current_event.source);
             }
+        }
+
+        let reverb_out = self.master_reverb.process(master_reverb_in);
+
+        for s in 0..128 {
+            out_buf[0][s] += reverb_out[0][s];
+            out_buf[1][s] += reverb_out[1][s];
         }
                         
         out_buf
@@ -251,6 +266,34 @@ mod tests {
         for i in 0..9 {
             //println!("{} {} ", out_buf[i], sample1[i + 1] + sample2[i + 1]);
             assert_approx_eq::assert_approx_eq!(out_buf[0][i], sample1[i + 1] + sample2[i + 1], 0.0001);
+        }        
+    }
+
+    #[test]
+    fn reverb_smoke_test() {
+        
+        let mut ruff = Ruffbox::new();
+
+        // first point and last two points are for eventual interpolation
+        let sample1 = [0.0, 0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0, 0.0, 0.0];
+                
+        let bnum1 = ruff.load_sample(&sample1);
+                
+        ruff.process(0.0);
+
+        let inst_1 = ruff.prepare_instance(SourceType::Sampler, 0.0, bnum1);        
+
+        // pan to left
+        ruff.set_instance_parameter(inst_1, SynthParameter::StereoPosition, -1.0);
+        ruff.set_instance_parameter(inst_1, SynthParameter::ReverbMix, 1.0);
+                       
+        ruff.trigger(inst_1);
+        
+        let out_buf = ruff.process(0.0);
+        
+        for i in 0..9 {
+            //println!("{} {} ", out_buf[i], sample1[i + 1] + sample2[i + 1]);
+            assert_approx_eq::assert_approx_eq!(out_buf[0][i], sample1[i + 1], 0.0001);
         }        
     }
 

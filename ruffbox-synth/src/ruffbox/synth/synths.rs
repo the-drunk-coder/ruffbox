@@ -15,6 +15,7 @@ pub struct SineSynth {
     oscillator: SineOsc,
     envelope: ASREnvelope,
     balance: Balance2,
+    reverb: f32,
 }
 
 impl SineSynth {
@@ -23,6 +24,7 @@ impl SineSynth {
             oscillator: SineOsc::new(440.0, 0.5, sr),
             envelope: ASREnvelope::new(sr, 0.3, 0.05, 0.1, 0.05),
             balance: Balance2::new(),
+            reverb: 0.0,
         }
     }
 }
@@ -31,7 +33,11 @@ impl StereoSynth for SineSynth {
     fn set_parameter(&mut self, par: SynthParameter, val: f32) {
         self.oscillator.set_parameter(par, val);
         self.envelope.set_parameter(par, val);
-        self.balance.set_parameter(par, val);
+        self.balance.set_parameter(par, val);        
+        match par {
+            SynthParameter::ReverbMix => self.reverb = val,
+            _ => (),
+        };        
     }
 
     fn finish(&mut self) {
@@ -47,6 +53,10 @@ impl StereoSynth for SineSynth {
         out = self.envelope.process_block(out, start_sample);
         self.balance.process_block(out)
     }
+
+    fn reverb_level(&self) -> f32 {
+        self.reverb
+    }
 }
 
 /// a low-frequency sawtooth synth with envelope and lpf18 filter
@@ -55,6 +65,7 @@ pub struct LFSawSynth {
     filter: Lpf18,
     envelope: ASREnvelope,
     balance: Balance2,
+    reverb: f32,
 }
 
 impl LFSawSynth {
@@ -64,6 +75,7 @@ impl LFSawSynth {
             filter: Lpf18::new(1500.0, 0.5, 0.1, sr),
             envelope: ASREnvelope::new(sr, 1.0, 0.002, 0.02, 0.08),
             balance: Balance2::new(),
+            reverb: 0.0,
         }
     }
 }
@@ -74,6 +86,11 @@ impl StereoSynth for LFSawSynth {
         self.filter.set_parameter(par, val);
         self.envelope.set_parameter(par, val);
         self.balance.set_parameter(par, val);
+
+        match par {
+            SynthParameter::ReverbMix => self.reverb = val,
+            _ => (),
+        };
     }
 
     fn finish(&mut self) {
@@ -90,12 +107,17 @@ impl StereoSynth for LFSawSynth {
         out = self.envelope.process_block(out, start_sample);
         self.balance.process_block(out)
     }
+
+    fn reverb_level(&self) -> f32 { 
+        self.reverb
+    }
 }
 
 /// a sinusoidal synth with envelope etc.
 pub struct StereoSampler {
     sampler: Sampler,
     balance: Balance2,
+    reverb: f32,
 }
 
 impl StereoSampler {
@@ -103,6 +125,7 @@ impl StereoSampler {
         StereoSampler {
             sampler: Sampler::with_buffer_ref(buf),
             balance: Balance2::new(),
+            reverb: 0.0,
         }
     }
 }
@@ -110,7 +133,12 @@ impl StereoSampler {
 impl StereoSynth for StereoSampler {
     fn set_parameter(&mut self, par: SynthParameter, val: f32) {
         self.sampler.set_parameter(par, val);        
-        self.balance.set_parameter(par, val);        
+        self.balance.set_parameter(par, val);
+
+        match par {
+            SynthParameter::ReverbMix => self.reverb = val,
+            _ => (),
+        };
     }
 
     fn finish(&mut self) {
@@ -124,5 +152,9 @@ impl StereoSynth for StereoSampler {
     fn get_next_block(&mut self, start_sample: usize) -> [[f32; 128]; 2] {
         let out: [f32; 128] = self.sampler.get_next_block(start_sample);
         self.balance.process_block(out)
+    }
+
+    fn reverb_level(&self) -> f32 {
+        self.reverb
     }
 }

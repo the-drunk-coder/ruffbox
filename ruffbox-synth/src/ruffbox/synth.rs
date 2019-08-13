@@ -4,6 +4,8 @@ pub mod routing;
 pub mod oscillators;
 pub mod synths;
 pub mod filters;
+pub mod reverb;
+
 
 pub enum SynthState { 
     Fresh,
@@ -59,6 +61,7 @@ pub trait StereoSynth {
     fn finish(&mut self);
     fn is_finished(&self) -> bool;
     fn get_next_block(&mut self, start_sample: usize) -> [[f32; 128]; 2];
+    fn reverb_level(&self) -> f32;
 }
 
 pub trait Effect {

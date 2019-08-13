@@ -4,6 +4,8 @@ use crate::ruffbox::synth::SynthParameter;
 /**
  * Three-pole, 18dB/octave filter with tanh distortion
  * Adapted from CSound via Soundpipe
+ *
+ * My all-time favourite lowpass :D
  */
 pub struct Lpf18 {
     // user parameters
