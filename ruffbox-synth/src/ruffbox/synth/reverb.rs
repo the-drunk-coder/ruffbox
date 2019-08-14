@@ -1,5 +1,6 @@
 struct FreeverbDefaultTuning;
 
+/// The default tuning, as it is found in the original freeverb code.
 impl FreeverbDefaultTuning {
     const FIXED_GAIN: f32		= 0.015;
     const SCALE_WET: f32		= 3.0;
@@ -43,8 +44,9 @@ impl FreeverbDefaultTuning {
     const ALLPASS_TUNING_L4: usize	= 225;
     const ALLPASS_TUNING_R4: usize	= 225 + FreeverbDefaultTuning::STEREO_SPREAD;
 }
+
 /**
- * An allpass filter to be used with the reverb effect.
+ * A sample-wise allpass filter to be used with the reverb effect.
  *
  * Adapted from the original Freeverb allpass filter.
  */
@@ -85,7 +87,7 @@ impl Allpass {
 
 
 /**
- * A comb filter to be used with the reverb effect.
+ * A sample-wise comb filter to be used with the reverb effect.
  *
  * Adapted from the original Freeverb comb filter.
  */
@@ -131,7 +133,7 @@ impl Comb {
 
 /**
  * Classic Schroeder/Moorer reverb, adapted from the original
- * Freeverb code by "Jezar at Dreampoint"
+ * Freeverb code written by "Jezar at Dreampoint".
  */
 pub struct StereoFreeverb {
     comb_l: Vec<Comb>,
