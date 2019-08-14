@@ -81,6 +81,13 @@ pub struct Ruffbox {
 impl Ruffbox {
     pub fn new() -> Ruffbox {
         let (tx, rx): (Sender<ScheduledEvent>, Receiver<ScheduledEvent>) = crossbeam::channel::bounded(1000);
+
+        // tweak some reverb values ... 
+        let mut rev = synth::reverb::StereoFreeverb::new();
+        rev.set_roomsize(0.65);
+        rev.set_damp(0.43);
+        rev.set_wet(1.0);
+        
         Ruffbox {            
             running_instances: Vec::with_capacity(600),
             pending_events: Vec::with_capacity(600),
@@ -93,7 +100,7 @@ impl Ruffbox {
             block_duration: 128.0 / 44100.0,
             sec_per_sample: 1.0 / 44100.0,
             now: 0.0,
-            master_reverb: synth::reverb::StereoFreeverb::new(),
+            master_reverb: rev,
         }
     }
            

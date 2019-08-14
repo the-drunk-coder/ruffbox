@@ -1,12 +1,8 @@
 struct FreeverbDefaultTuning;
 
 impl FreeverbDefaultTuning {
-    //const NUM_COMBS: usize              = 8;
-    //const NUM_ALLPASSES: usize          = 4;
-    //const MUTED: f32			= 0.0;
     const FIXED_GAIN: f32		= 0.015;
     const SCALE_WET: f32		= 3.0;
-    const SCALE_DRY: f32		= 2.0;
     const SCALE_DAMP: f32		= 0.4;
     const SCALE_ROOM: f32		= 0.28;
     const OFFSET_ROOM: f32		= 0.7;
@@ -14,8 +10,6 @@ impl FreeverbDefaultTuning {
     const INITIAL_DAMP: f32		= 0.5;
     const INITIAL_WET: f32		= 1.0 / FreeverbDefaultTuning::SCALE_WET; // scalewet
     const INITIAL_WIDTH: f32	        = 1.0;
-    const INITIAL_MODE: f32		= 0.0;
-    const FREEZE_MODE: f32		= 0.5;
     const STEREO_SPREAD: usize	        = 23;
 
     // NOTE FROM ORIGIAL CODE:
@@ -74,10 +68,9 @@ impl Allpass {
     #[inline(always)]
     pub fn process_sample(&mut self, sample: f32) -> f32 {
 
-        let mut out: f32 = 0.0;
         let buf_out: f32 = self.delay_buffer[self.delay_idx];
                
-        out = (-1.0 * sample) + buf_out;
+        let out = (-1.0 * sample) + buf_out;
         self.delay_buffer[self.delay_idx] = sample + (buf_out * self.feedback);
         
         // increment delay idx
@@ -121,9 +114,8 @@ impl Comb {
     
     #[inline(always)]
     pub fn process_sample(&mut self, sample: f32) -> f32 {
-        let mut out: f32 = 0.0;
-
-        out = self.delay_buffer[self.delay_idx];
+        
+        let out = self.delay_buffer[self.delay_idx];
         self.filterstore = (out * self.damp2) + (self.filterstore * self.damp1);
         self.delay_buffer[self.delay_idx] = sample + (self.filterstore * self.feedback);
 
@@ -148,15 +140,11 @@ pub struct StereoFreeverb {
     allpass_r: Vec<Allpass>,
     gain: f32,
     roomsize: f32,
-    roomsize1: f32,
     damp: f32,
-    damp1: f32,
     wet: f32,
     wet1: f32,
     wet2: f32,
-    //dry: f32,
     width: f32,
-    mode: f32,
 }
 
 impl StereoFreeverb {
@@ -203,15 +191,48 @@ impl StereoFreeverb {
             allpass_r: allpass_r,
             gain: FreeverbDefaultTuning::FIXED_GAIN,
             roomsize: FreeverbDefaultTuning::INITIAL_ROOM,
-            roomsize1: FreeverbDefaultTuning::INITIAL_ROOM,
             damp: FreeverbDefaultTuning::INITIAL_DAMP,
-            damp1: FreeverbDefaultTuning::INITIAL_DAMP,
             wet: FreeverbDefaultTuning::INITIAL_WET,
             wet1: wet1,
-            wet2: wet1,
+            wet2: wet2,
             width: FreeverbDefaultTuning::INITIAL_WIDTH,
-            mode:  FreeverbDefaultTuning::INITIAL_MODE,
         }
+    }
+
+    pub fn set_roomsize(&mut self, value: f32) {
+        self.roomsize = (value * FreeverbDefaultTuning::SCALE_ROOM) + FreeverbDefaultTuning::OFFSET_ROOM;
+        // accumulate comb filters in parallel
+        for comb in self.comb_l.iter_mut() {
+            comb.feedback = self.roomsize;
+        }
+        
+        for comb in self.comb_r.iter_mut() {
+            comb.feedback = self.roomsize;            
+        }
+    }
+
+    pub fn set_damp(&mut self, value: f32) {
+        self.damp = value * FreeverbDefaultTuning::SCALE_DAMP;
+        for comb in self.comb_l.iter_mut() {
+            comb.damp1 = self.damp;
+            comb.damp2 = 1.0 - self.damp;
+        }
+        
+        for comb in self.comb_r.iter_mut() {
+            comb.damp1 = self.damp;
+            comb.damp2 = 1.0 - self.damp;            
+        }
+    }
+    
+    pub fn set_wet(&mut self, value: f32) {
+        self.wet = value * FreeverbDefaultTuning::SCALE_WET;
+        self.wet1 = self.wet * ((self.width / 2.0) + 0.5);
+        self.wet2 = self.wet * ((1.0 - self.width) / 2.0);
+    }
+
+    pub fn set_width(&mut self, value: f32) {
+        self.width = value;
+        self.set_wet(self.width);
     }
     
     /**
@@ -225,13 +246,15 @@ impl StereoFreeverb {
             let mut out_l = 0.0;
             let mut out_r = 0.0;
 
+            let in_mix = block[i] * self.gain;
+            
             // accumulate comb filters in parallel
             for comb in self.comb_l.iter_mut() {
-                out_l += comb.process_sample(block[i]);
+                out_l += comb.process_sample(in_mix);
             }
 
             for comb in self.comb_r.iter_mut() {
-                out_r += comb.process_sample(block[i]);
+                out_r += comb.process_sample(in_mix);
             }
 
             // accumulate allpass filters in series
