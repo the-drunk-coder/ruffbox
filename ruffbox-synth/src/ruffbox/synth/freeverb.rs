@@ -132,8 +132,14 @@ impl Comb {
 }
 
 /**
- * Classic Schroeder/Moorer reverb, adapted from the original
- * Freeverb code written by "Jezar at Dreampoint".
+ * Classic Schroeder/Moorer reverb, adapted from the 
+ * original Freeverb code written by "Jezar at Dreampoint".
+ * 
+ * It's slightly simplified and doesn't have a dry/wet paramater,
+ * as it's meant to be used on a bus rather than directly on a track.
+ * For the same reason, it only has a replacing process function.
+ *
+ * The freeze mode feature has been left out as well.
  */
 pub struct StereoFreeverb {
     comb_l: Vec<Comb>,

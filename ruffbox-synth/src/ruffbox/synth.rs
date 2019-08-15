@@ -4,7 +4,7 @@ pub mod routing;
 pub mod oscillators;
 pub mod synths;
 pub mod filters;
-pub mod reverb;
+pub mod freeverb;
 
 
 pub enum SynthState { 

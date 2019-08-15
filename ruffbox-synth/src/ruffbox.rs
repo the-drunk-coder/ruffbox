@@ -13,6 +13,7 @@ use std::sync::Arc;
 use crate::ruffbox::synth::StereoSynth;
 use crate::ruffbox::synth::SynthParameter;
 use crate::ruffbox::synth::SourceType;
+use crate::ruffbox::synth::freeverb::StereoFreeverb;
 use crate::ruffbox::synth::synths::*;
 
 /// timed event, to be created in the trigger method, then 
@@ -75,7 +76,7 @@ pub struct Ruffbox {
     block_duration: f64,
     sec_per_sample: f64,
     now: f64,
-    master_reverb: synth::reverb::StereoFreeverb,
+    master_reverb: StereoFreeverb,
 }
 
 impl Ruffbox {
@@ -83,7 +84,7 @@ impl Ruffbox {
         let (tx, rx): (Sender<ScheduledEvent>, Receiver<ScheduledEvent>) = crossbeam::channel::bounded(1000);
 
         // tweak some reverb values ... 
-        let mut rev = synth::reverb::StereoFreeverb::new();
+        let mut rev = StereoFreeverb::new();
         rev.set_roomsize(0.65);
         rev.set_damp(0.43);
         rev.set_wet(1.0);
