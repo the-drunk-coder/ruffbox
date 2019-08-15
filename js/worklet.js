@@ -1,6 +1,27 @@
 class RuffboxProcessor extends AudioWorkletProcessor {
-    static get parameterDescriptors() {
-	return []
+    static get parameterDescriptors() {	
+	return [
+	    {
+		name: 'reverb_roomsize',
+		defaultValue: 0.65,
+	    },
+	    {
+		name: 'reverb_dampening',
+		defaultValue: 0.43,
+	    },
+	    {
+		name: 'delay_time',
+		defaultValue: 0.256,
+	    },
+	    {
+		name: 'delay_feedback',
+		defaultValue: 0.5,
+	    },
+	    {
+		name: 'delay_cutoff',
+		defaultValue: 3000.0,
+	    },
+	]
     }
    
     loadSample(sampleData, sampleSize, id){
@@ -35,9 +56,12 @@ class RuffboxProcessor extends AudioWorkletProcessor {
     constructor(options) {
 	super(options)
 
-	// representations of the internal macros ... 
-	this._sourceType = 
-	
+	this._last_reverb_roomsize = 0.65;
+	this._last_reverb_dampening = 0.43;
+	this._last_delay_time = 0.256;
+	this._last_delay_feedback = 0.5;
+	this._last_delay_cutoff = 3000.0;
+		
 	this.port.onmessage = e => {
 	    // unfortunately, this seems to be the only way to load
 	    // the wasm module in the worklet.
@@ -117,6 +141,31 @@ class RuffboxProcessor extends AudioWorkletProcessor {
 	
 	let output = outputs[0];
 
+	if(this._last_reverb_roomsize != parameters.reverb_roomsize[0]) {
+	    this._wasm.exports.set_master_parameter(25, parameters.reverb_roomsize[0]);
+	    this._last_reverb_roomsize = parameters.reverb_roomsize[0];
+	}
+
+	if(this._last_reverb_dampening != parameters.reverb_dampening[0]) {
+	    this._wasm.exports.set_master_parameter(23, parameters.reverb_dampening[0]);
+	    this._last_reverb_dampening = parameters.reverb_dampening[0];
+	}
+
+	if(this._last_delay_time != parameters.delay_time[0]) {
+	    this._wasm.exports.set_master_parameter(5, parameters.delay_time[0]);
+	    this._last_delay_time = parameters.delay_time[0];
+	}
+
+	if(this._last_delay_feedback != parameters.delay_feedback[0]) {
+	    this._wasm.exports.set_master_parameter(3, parameters.delay_feedback[0]);
+	    this._last_delay_feedback = parameters.delay_feedback[0];
+	}
+
+	if(this._last_delay_cutoff != parameters.delay_cutoff[0]) {
+	    this._wasm.exports.set_master_parameter(2, parameters.delay_cutoff[0]);
+	    this._last_delay_cutoff = parameters.delay_cutoff[0];
+	}
+	
 	this._wasm.exports.process(this._outPtr_l, this._outPtr_r, this._size, currentTime);
 	output[0].set(this._outBuf_l)
 	output[1].set(this._outBuf_r)

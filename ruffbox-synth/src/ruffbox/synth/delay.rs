@@ -18,7 +18,7 @@ impl MonoDelay {
             buffer_idx: 0,
             max_buffer_idx: (sr * 0.256) as usize, // 512ms default time 
             feedback: 0.5,
-            dampening_filter: Lpf18::new(3000.0, 0.6, 0.6, sr),
+            dampening_filter: Lpf18::new(3000.0, 0.4, 0.3, sr),
             samplerate: sr,
         }
     }

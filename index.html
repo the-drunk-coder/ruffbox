@@ -35,17 +35,34 @@ bd ~ ~ ~ bd ~ ~ ~ bd ~ ~ ~ bd ~ ~ ~
       hh = hi-hat <br/>
       ~ = silence <br/>     
     </div>
-    
-    <div style="clear:left; padding-top: 10px;">      
-      <h2> Manual Triggers (for testing) </h2>      
-      <div>      
-	<webaudio-switch id="bassdrum-trigger" defval="0" value="0" type="kick">Bassdrum</webaudio-switch>
-	<webaudio-switch id="snare-trigger" defval="0" value="0" type="kick">Snare</webaudio-switch>
+    <br/><br/><br/>
+
+    <div style="clear: left;">
+      <div style="float: left; padding-top: 10px; padding-right: 30px;">      
+	<h2 style="margin-bottom: 5px;">Master Reverb</h2>
+	Use 'rev' parameter on event!<br/>
+	<div style="padding-top: 10px;">      
+	  <webaudio-knob id="reverb-roomsize-knob" value="0.65" min="0.02" max="1.0" step="0.001" diameter="32">Roomsize</webaudio-knob>
+          <webaudio-knob id="reverb-dampening-knob" value="0.44" min="0.02" max="1.0" step="0.001" diameter="32">Damp</webaudio-knob>
+	</div>
       </div>
-    </div>      
+
+      <div style="float: left; padding-top: 10px;">      
+	<h2 style="margin-bottom: 5px;">Master Delay</h2>
+	Use 'del' parameter on event!
+	<div style="padding-top: 10px;">
+	  <webaudio-knob id="delay-time-knob" value="0.256" min="0.02" max="2.0" step="0.001" diameter="32">Time (sec)</webaudio-knob>
+	  <webaudio-knob id="delay-feedback-knob" value="0.5" min="0.00" max="1.0" step="0.001" diameter="32">Feedback</webaudio-knob>
+	  <webaudio-knob id="delay-cutoff-knob" value="3000" min="100" max="6000" step="1" diameter="32">Cutoff</webaudio-knob>
+	</div>
+      </div>
+    </div>
+    
     <br/>
     <br/>
-    <div>
+    <br/>
+    
+    <div style="clear: left; padding-top: 40px;">
       Made with <b>Rust</b>, <b>Web Workers</b>, <b>AudioWorklet</b> and <b>WebAssembly</b>!
     </div>
     <br/>

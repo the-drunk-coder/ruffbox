@@ -154,24 +154,37 @@ if (ctx.audioWorklet === undefined) {
 
 	    var running = false;
 	    var tempo = document.getElementById('tempo').value
+
+	    // master effects - reverb
+	    const rev_roomsize = document.getElementById('reverb-roomsize-knob')
+	    rev_roomsize.addEventListener('input', e => {
+		n.parameters.get('reverb_roomsize').value = e.target.value
+	    })
 	    
-	    // manual triggers
-	    const bdTrig = document.getElementById('bassdrum-trigger')
-	    bdTrig.addEventListener('change', e => {				
-		if (e.target.value === 1) {
-		    n.port.postMessage({ type: 'trigger', event : { source_type : "Sampler", sample_id: 'bd', timestamp: 0.0, params: {}}})
-		}
+	    const rev_damp = document.getElementById('reverb-dampening-knob')
+	    rev_damp.addEventListener('input', e => {
+		n.parameters.get('reverb_dampening').value = e.target.value
 	    })
 
-	    const snTrig = document.getElementById('snare-trigger')
-	    snTrig.addEventListener('change', e => {				
-		if (e.target.value === 1) {
-		    n.port.postMessage({ type: 'trigger', event : { source_type : "Sampler", sample_id: 'sn', timestamp: 0.0, params: {}}})
-		}
+	    // master effects - delay
+	    const del_time = document.getElementById('delay-time-knob')
+	    del_time.addEventListener('input', e => {
+		n.parameters.get('delay_time').value = e.target.value
 	    })
-	  
+	    
+	    const del_feedback = document.getElementById('delay-feedback-knob')
+	    del_feedback.addEventListener('input', e => {
+		n.parameters.get('delay_feedback').value = e.target.value
+	    })
+
+	    const del_cutoff = document.getElementById('delay-cutoff-knob')
+	    del_cutoff.addEventListener('input', e => {
+		n.parameters.get('delay_cutoff').value = e.target.value
+	    })
+	    	    
+	    // scheduler controls
 	    const startSched = document.getElementById('start-scheduler')	   
-	    startSched.addEventListener('change', e => {				
+	    startSched.addEventListener('change', e => {
 		if (e.target.value === 1) {
 		    if(ctx.state === "suspended"){
 			ctx.resume();
