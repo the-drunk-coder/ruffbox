@@ -238,6 +238,7 @@ impl StereoFreeverb {
         self.wet2 = self.wet * ((1.0 - self.width) / 2.0);
     }
 
+    #[allow(dead_code)]
     pub fn set_width(&mut self, value: f32) {
         self.width = value;
         self.set_wet(self.width);
