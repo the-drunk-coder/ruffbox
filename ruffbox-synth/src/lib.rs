@@ -47,6 +47,12 @@ pub extern "C" fn set_instance_parameter(instance_id: usize, par: ruffbox::synth
 }
 
 #[no_mangle]
+pub extern "C" fn set_master_parameter(par: ruffbox::synth::SynthParameter, val: f32) {
+    let mut ruff = RUFF.lock();
+    ruff.set_master_parameter(par, val);
+}
+
+#[no_mangle]
 pub extern "C" fn trigger(instance_id: usize) {
     let mut ruff = RUFF.lock();
     ruff.trigger(instance_id);

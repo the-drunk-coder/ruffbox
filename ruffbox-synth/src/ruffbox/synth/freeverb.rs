@@ -1,3 +1,5 @@
+use crate::ruffbox::synth::SynthParameter;
+
 struct FreeverbDefaultTuning;
 
 /// The default tuning, as it is found in the original freeverb code.
@@ -192,6 +194,7 @@ impl StereoFreeverb {
         let wet = FreeverbDefaultTuning::INITIAL_WET * FreeverbDefaultTuning::SCALE_WET; 
         let wet1 = wet * ((FreeverbDefaultTuning::INITIAL_WIDTH / 2.0) + 0.5);
         let wet2 = wet * ((1.0 - FreeverbDefaultTuning::INITIAL_WIDTH) / 2.0);
+
         StereoFreeverb {
             comb_l: comb_l,
             comb_r: comb_r,
@@ -242,6 +245,14 @@ impl StereoFreeverb {
     pub fn set_width(&mut self, value: f32) {
         self.width = value;
         self.set_wet(self.width);
+    }
+
+    pub fn set_parameter(&mut self, par: SynthParameter, val: f32) {
+        match par {
+            SynthParameter::ReverbRoomsize => self.set_roomsize(val),
+            SynthParameter::ReverbDampening => self.set_damp(val),
+            _ => (),
+        };
     }
     
     /**

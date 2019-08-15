@@ -207,6 +207,11 @@ impl Ruffbox {
     pub fn set_instance_parameter(&mut self, instance_id: usize, par: SynthParameter, val: f32) {
         self.prepared_instance_map.get_mut(&instance_id).unwrap().set_parameter(par, val);
     }
+
+    pub fn set_master_parameter(&mut self, par: SynthParameter, val: f32) {
+        self.master_reverb.set_parameter(par, val);
+        self.master_delay.set_parameter(par, val);
+    }
     
     /// triggers a synth for buffer reference or a synth
     pub fn trigger(&mut self, instance_id: usize) {

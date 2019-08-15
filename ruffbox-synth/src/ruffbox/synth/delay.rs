@@ -7,7 +7,8 @@ pub struct MonoDelay {
     buffer_idx: usize,
     max_buffer_idx: usize,
     feedback: f32,
-    dampening_filter: Lpf18,        
+    dampening_filter: Lpf18,
+    samplerate: f32,
 }
 
 impl MonoDelay {
@@ -18,16 +19,18 @@ impl MonoDelay {
             max_buffer_idx: (sr * 0.256) as usize, // 512ms default time 
             feedback: 0.5,
             dampening_filter: Lpf18::new(3000.0, 0.6, 0.6, sr),
+            samplerate: sr,
         }
     }
 }
 
 impl Effect for MonoDelay {
     // some parameter limits might be nice ... 
-    fn set_parameter(&mut self, par: SynthParameter, val: f32) {
-        self.dampening_filter.set_parameter(par, val);
-        
+    fn set_parameter(&mut self, par: SynthParameter, val: f32) {                       
         match par {            
+            SynthParameter::DelayDampeningFrequency => self.dampening_filter.set_parameter(SynthParameter::LowpassCutoffFrequency, val),
+            SynthParameter::DelayFeedback => self.feedback = val,
+            SynthParameter::DelayTime => self.max_buffer_idx = (self.samplerate * val) as usize,
             _ => (),
         };
     }
@@ -70,7 +73,7 @@ impl StereoDelay {
         }
     }
 
-    fn set_parameter(&mut self, par: SynthParameter, val: f32) {
+    pub fn set_parameter(&mut self, par: SynthParameter, val: f32) {
         self.delay_l.set_parameter(par, val);
         self.delay_r.set_parameter(par, val);
     }
