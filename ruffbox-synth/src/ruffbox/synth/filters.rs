@@ -58,6 +58,19 @@ impl Lpf18 {
             samplerate: sr,
         }
     }
+
+    pub fn process_sample(&mut self, sample: f32) -> f32 {
+        self.ax1  = self.lastin;
+        self.ay11 = self.ay1;
+        self.ay31 = self.ay2;
+        
+        self.lastin = sample - (self.kres * self.aout).tanh();
+        self.ay1 = self.kp1h * (self.lastin + self.ax1) - self.kp * self.ay1;
+        self.ay2 = self.kp1h * (self.ay1 + self.ay11) - self.kp * self.ay2;
+        self.aout = self.kp1h * (self.ay2 + self.ay31) - self.kp * self.aout;
+        
+        (self.aout * self.value).tanh()           
+    }
 }
 
 impl Effect for Lpf18 {

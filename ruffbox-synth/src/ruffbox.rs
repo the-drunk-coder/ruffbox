@@ -14,6 +14,7 @@ use crate::ruffbox::synth::StereoSynth;
 use crate::ruffbox::synth::SynthParameter;
 use crate::ruffbox::synth::SourceType;
 use crate::ruffbox::synth::freeverb::StereoFreeverb;
+use crate::ruffbox::synth::delay::StereoDelay;
 use crate::ruffbox::synth::synths::*;
 
 /// timed event, to be created in the trigger method, then 
@@ -77,6 +78,7 @@ pub struct Ruffbox {
     sec_per_sample: f64,
     now: f64,
     master_reverb: StereoFreeverb,
+    master_delay: StereoDelay,
 }
 
 impl Ruffbox {
@@ -88,6 +90,8 @@ impl Ruffbox {
         rev.set_roomsize(0.65);
         rev.set_damp(0.43);
         rev.set_wet(1.0);
+
+        let del = StereoDelay::with_max_capacity_sec(2.0, 44100.0);
         
         Ruffbox {            
             running_instances: Vec::with_capacity(600),
@@ -102,11 +106,14 @@ impl Ruffbox {
             sec_per_sample: 1.0 / 44100.0,
             now: 0.0,
             master_reverb: rev,
+            master_delay: del,
         }
     }
            
     pub fn process(&mut self, stream_time: f64) -> [[f32; 128]; 2] {        
         let mut out_buf: [[f32; 128]; 2] = [[0.0; 128]; 2];
+
+        let mut master_delay_in: [[f32; 128]; 2] = [[0.0; 128]; 2];        
         let mut master_reverb_in: [f32; 128] = [0.0; 128];
 
         self.now = stream_time;
@@ -134,7 +141,9 @@ impl Ruffbox {
                 out_buf[0][s] += block[0][s];
                 out_buf[1][s] += block[1][s];
 
-                master_reverb_in[s] += (block[0][s] + block[1][s]) * running_inst.reverb_level();                
+                master_reverb_in[s] += (block[0][s] + block[1][s]) * running_inst.reverb_level();
+                master_delay_in[0][s] += block[0][s] * running_inst.delay_level();
+                master_delay_in[1][s] += block[1][s] * running_inst.delay_level();
             }
         }
         
@@ -157,6 +166,8 @@ impl Ruffbox {
                 out_buf[1][s] += block[1][s];
                 
                 master_reverb_in[s] += (block[0][s] + block[1][s]) * current_event.source.reverb_level();
+                master_delay_in[0][s] += block[0][s] * current_event.source.delay_level();
+                master_delay_in[1][s] += block[1][s] * current_event.source.delay_level();
             }
             
             // if length of sample event is longer than the rest of the block,
@@ -167,12 +178,13 @@ impl Ruffbox {
         }
 
         let reverb_out = self.master_reverb.process(master_reverb_in);
-
+        let delay_out = self.master_delay.process(master_delay_in);
+        
         for s in 0..128 {
-            out_buf[0][s] += reverb_out[0][s];
-            out_buf[1][s] += reverb_out[1][s];
+            out_buf[0][s] += reverb_out[0][s] + delay_out[0][s];
+            out_buf[1][s] += reverb_out[1][s] + delay_out[1][s];
         }
-                        
+                              
         out_buf
     }
 

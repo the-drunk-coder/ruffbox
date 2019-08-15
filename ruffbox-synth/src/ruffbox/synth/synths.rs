@@ -16,6 +16,7 @@ pub struct SineSynth {
     envelope: ASREnvelope,
     balance: Balance2,
     reverb: f32,
+    delay: f32,
 }
 
 impl SineSynth {
@@ -25,6 +26,7 @@ impl SineSynth {
             envelope: ASREnvelope::new(sr, 0.3, 0.05, 0.1, 0.05),
             balance: Balance2::new(),
             reverb: 0.0,
+            delay: 0.0,
         }
     }
 }
@@ -36,6 +38,7 @@ impl StereoSynth for SineSynth {
         self.balance.set_parameter(par, val);        
         match par {
             SynthParameter::ReverbMix => self.reverb = val,
+            SynthParameter::DelayMix => self.delay = val,
             _ => (),
         };        
     }
@@ -57,6 +60,10 @@ impl StereoSynth for SineSynth {
     fn reverb_level(&self) -> f32 {
         self.reverb
     }
+
+    fn delay_level(&self) -> f32 {
+        self.delay
+    }
 }
 
 /// a low-frequency sawtooth synth with envelope and lpf18 filter
@@ -66,6 +73,7 @@ pub struct LFSawSynth {
     envelope: ASREnvelope,
     balance: Balance2,
     reverb: f32,
+    delay: f32,
 }
 
 impl LFSawSynth {
@@ -76,6 +84,7 @@ impl LFSawSynth {
             envelope: ASREnvelope::new(sr, 1.0, 0.002, 0.02, 0.08),
             balance: Balance2::new(),
             reverb: 0.0,
+            delay: 0.0,
         }
     }
 }
@@ -89,6 +98,7 @@ impl StereoSynth for LFSawSynth {
 
         match par {
             SynthParameter::ReverbMix => self.reverb = val,
+            SynthParameter::DelayMix => self.delay = val,
             _ => (),
         };
     }
@@ -111,6 +121,10 @@ impl StereoSynth for LFSawSynth {
     fn reverb_level(&self) -> f32 { 
         self.reverb
     }
+
+    fn delay_level(&self) -> f32 { 
+        self.delay
+    }
 }
 
 /// a sinusoidal synth with envelope etc.
@@ -118,6 +132,7 @@ pub struct StereoSampler {
     sampler: Sampler,
     balance: Balance2,
     reverb: f32,
+    delay: f32,
 }
 
 impl StereoSampler {
@@ -126,6 +141,7 @@ impl StereoSampler {
             sampler: Sampler::with_buffer_ref(buf),
             balance: Balance2::new(),
             reverb: 0.0,
+            delay: 0.0,
         }
     }
 }
@@ -137,6 +153,7 @@ impl StereoSynth for StereoSampler {
 
         match par {
             SynthParameter::ReverbMix => self.reverb = val,
+            SynthParameter::DelayMix => self.delay = val,
             _ => (),
         };
     }
@@ -156,5 +173,9 @@ impl StereoSynth for StereoSampler {
 
     fn reverb_level(&self) -> f32 {
         self.reverb
+    }
+
+    fn delay_level(&self) -> f32 {
+        self.delay
     }
 }
