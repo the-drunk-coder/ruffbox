@@ -9,7 +9,7 @@ cp target/wasm32-unknown-unknown/release/ruffbox_synth.wasm ../wasm/
 cd ..
 
 echo "compile scheduler to wasm"
-cd ruffbox-scheduler
+cd ruffbox-pattern
 wasm-pack build --target web
 
 cp -r pkg/* ../js/pkg/

@@ -1,8 +1,9 @@
 [package]
-name = "ruffbox-scheduler"
-version = "0.1.0"
+name = "ruffbox-pattern"
+version = "1.0.0"
 authors = ["Niklas <nik@parkellipsen.de>"]
 edition = "2018"
+license = "GPL-3.0+"
 
 [lib]
 crate-type = ["cdylib", "rlib"]

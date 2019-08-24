@@ -1,5 +1,5 @@
 ruffbox-synth/target/*
-ruffbox-scheduler/target/*
-ruffbox-scheduler/pkg/*
+ruffbox-pattern/target/*
+ruffbox-pattern/pkg/*
 *~
 *.lock
