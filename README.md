@@ -19,7 +19,7 @@ This basically is (or is eveolving from) a proof-of-concept on how to make a mul
 It has three parts that communicate over message-passing:
 
 * the *ruffbox-synth*, a synth player that runs inside an *AudioWorkletProcessor*
-* the *ruffbox-scheduler*, a seqeunce generator that runs in a *Web Worker* thread
+* the *ruffbox-scheduler*, a sequence generator that runs in a *Web Worker* thread
 * the user interaction part, running in the main thread
 
 ### Challenges & Development History
