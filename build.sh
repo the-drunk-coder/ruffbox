@@ -12,6 +12,7 @@ echo "compile scheduler to wasm"
 cd ruffbox-pattern
 wasm-pack build --target web
 
+mkdir -p ../js/pkg
 cp -r pkg/* ../js/pkg/
 
 echo "finish!"
