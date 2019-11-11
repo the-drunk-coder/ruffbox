@@ -1,4 +1,4 @@
-import init, { Scheduler } from './pkg/ruffbox_scheduler.js';
+import init, { Scheduler } from './pkg/ruffbox_pattern.js';
 
 async function get_scheduler() {
     // First up we need to actually load the wasm file, so we use the
