@@ -197,6 +197,7 @@ impl Ruffbox {
             SourceType::SineSynth => ScheduledEvent::new(timestamp, Box::new(SineSynth::new(44100.0))),
             SourceType::Sampler => ScheduledEvent::new(timestamp, Box::new(StereoSampler::with_buffer_ref(&self.buffers[sample_buf]))),
             SourceType::LFSawSynth => ScheduledEvent::new(timestamp, Box::new(LFSawSynth::new(44100.0))),
+            SourceType::LFSquareSynth => ScheduledEvent::new(timestamp, Box::new(LFSquareSynth::new(44100.0))),
         };
 
         self.prepared_instance_map.insert(instance_id, scheduled_event);

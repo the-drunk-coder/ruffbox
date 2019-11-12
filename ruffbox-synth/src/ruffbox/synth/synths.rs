@@ -127,6 +127,67 @@ impl StereoSynth for LFSawSynth {
     }
 }
 
+/// a low-frequency (non-bandlimited) squarewave synth with envelope and lpf18 filter
+pub struct LFSquareSynth {
+    oscillator: LFSquare,
+    filter: Lpf18,
+    envelope: ASREnvelope,
+    balance: Balance2,
+    reverb: f32,
+    delay: f32,
+}
+
+impl LFSquareSynth {
+    pub fn new(sr: f32) -> Self {
+        LFSquareSynth {
+            oscillator: LFSquare::new(100.0, 0.4, 0.8, sr),
+            filter: Lpf18::new(1500.0, 0.5, 0.1, sr),
+            envelope: ASREnvelope::new(sr, 1.0, 0.002, 0.02, 0.08),
+            balance: Balance2::new(),
+            reverb: 0.0,
+            delay: 0.0,
+        }
+    }
+}
+
+impl StereoSynth for LFSquareSynth {
+    fn set_parameter(&mut self, par: SynthParameter, val: f32) {
+        self.oscillator.set_parameter(par, val);
+        self.filter.set_parameter(par, val);
+        self.envelope.set_parameter(par, val);
+        self.balance.set_parameter(par, val);
+
+        match par {
+            SynthParameter::ReverbMix => self.reverb = val,
+            SynthParameter::DelayMix => self.delay = val,
+            _ => (),
+        };
+    }
+
+    fn finish(&mut self) {
+        self.envelope.finish();
+    }
+
+    fn is_finished(&self) -> bool {
+        self.envelope.is_finished()
+    }
+
+    fn get_next_block(&mut self, start_sample: usize) -> [[f32; 128]; 2] {
+        let mut out: [f32; 128] = self.oscillator.get_next_block(start_sample);
+        out = self.filter.process_block(out, start_sample);
+        out = self.envelope.process_block(out, start_sample);
+        self.balance.process_block(out)
+    }
+
+    fn reverb_level(&self) -> f32 { 
+        self.reverb
+    }
+
+    fn delay_level(&self) -> f32 { 
+        self.delay
+    }
+}
+
 /// a sinusoidal synth with envelope etc.
 pub struct StereoSampler {
     sampler: Sampler,

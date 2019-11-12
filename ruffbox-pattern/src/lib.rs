@@ -3,8 +3,6 @@ extern crate stdweb;
 extern crate web_sys;
 
 use js_sys::Math;
-//use rand::seq::SliceRandom; // 0.6.5
-
 use wasm_bindgen::prelude::*;
 
 use std::collections::HashMap;
@@ -239,6 +237,7 @@ impl Scheduler {
             let next_source_type = match next_event.as_str() {
                 "sine" => "SineSynth",
                 "saw" => "LFSawSynth",
+                "sqr" => "LFSquareSynth",
                 _ => "Sampler",
             };
                                                            

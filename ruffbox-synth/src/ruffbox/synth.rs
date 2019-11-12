@@ -54,6 +54,7 @@ pub enum SourceType {
     SineOsc,
     SineSynth,
     LFSawSynth,
+    LFSquareSynth,
 }
 
 pub trait Source {
