@@ -7,8 +7,8 @@ Currently needs Chromium/Chrome 74+ for the *AudioWorklet*, and the *#enable-exp
 ## Project Structure
 
 * **ruffbox-synth** contains synthesizer part of the application
-* **ruffbox-scheduler** contains the Rust part of the step-sequencer/scheduler
-* **js/scheduler.js** contains the JavaScript WebWorker part of the scheduler
+* **ruffbox-pattern** contains the Rust part of the text-based step-sequencer/scheduler
+* **js/scheduler.js** contains the JavaScript WebWorker part of the scheduler/pattern sequencer
 * **js/setup.js** contains the JavaScript glue code to put things together, load the audio context etc.
 * **js/worklet.js** contains the AudioWorkletProcessor.
 
@@ -19,7 +19,7 @@ This basically is (or is eveolving from) a proof-of-concept on how to make a mul
 It has three parts that communicate over message-passing:
 
 * the *ruffbox-synth*, a synth player that runs inside an *AudioWorkletProcessor*
-* the *ruffbox-scheduler*, a seqeunce generator that runs in a *Web Worker* thread
+* the *ruffbox-pattern*, a sequence generator that runs in a *Web Worker* thread
 * the user interaction part, running in the main thread
 
 ### Challenges & Development History
