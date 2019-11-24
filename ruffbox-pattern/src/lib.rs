@@ -2,10 +2,16 @@
 extern crate stdweb;
 extern crate web_sys;
 
-use js_sys::Math;
-use wasm_bindgen::prelude::*;
+//use js_sys::Math;
+pub mod seqgen;
+pub mod parser;
 
+use std::collections::hash_map::DefaultHasher;
+use wasm_bindgen::prelude::*;
+use std::hash::{Hash, Hasher};
 use std::collections::HashMap;
+
+use crate::seqgen::*;
 
 // A macro to provide `println!(..)`-style syntax for `console.log` logging.
 macro_rules! log {
@@ -14,152 +20,137 @@ macro_rules! log {
     }
 }
 
-pub enum ParamRowMode {
-    Cycle,
-    Random,
+type EventHash = u64;
+
+fn calculate_hash<T: Hash>(t: &T) -> u64 {
+    let mut s = DefaultHasher::new();
+    t.hash(&mut s);
+    s.finish()
 }
 
-struct ParamRow {
-    mode: ParamRowMode,
-    idx: usize,
-    values: Vec<f32>,
+struct MainEvent {
+    name: String,
+    params: HashMap<String, f32>,
 }
 
-impl ParamRow {
-    pub fn new(mode: ParamRowMode) -> Self {
-        ParamRow {
-            mode: mode,
-            idx: 0,
-            values: Vec::new(),
+impl Hash for MainEvent {
+     fn hash<H: Hasher>(&self, state: &mut H) {
+         self.name.hash(state);
+         for (par, _val) in self.params.iter() {
+             par.hash(state);
+             //(*val).hash(state);
+         }
+     }    
+}
+
+impl MainEvent {
+    fn from_parsed_input(input_name: String, input_params: &Vec<(&str, f32)>) -> Self {
+        let mut param_map = HashMap::new();
+
+        for param_tuple in input_params {
+            param_map.insert(param_tuple.0.to_string(), param_tuple.1);
         }
+        
+        MainEvent {
+            name: input_name.to_string(),
+            params: param_map,
+        }
+    }
+}
+
+impl PartialEq for MainEvent {    
+    fn eq(&self, other: &Self) -> bool {
+        for (param, value) in self.params.iter() {
+            if !other.params.contains_key(param) {
+                return false
+            } else if *value != other.params[param] {
+                return false
+            }
+        }
+        self.name == other.name        
     }
 }
 
 /// A simple event sequence represented by a vector of strings and params
 struct EventSequence {
-    events: Vec<(String, HashMap<String, f32>)>,
-    param_rows: HashMap<String, ParamRow>,
-    idx: usize,
+    event_refs: HashMap<EventHash, MainEvent>,
+    events: Box<dyn SequenceGenerator<EventHash>>,
+    param_generators: HashMap<String, Box<dyn SequenceGenerator<f32>>>
 }
 
 impl EventSequence {
+   
+    /// Create an event sequence from a string.    
+    pub fn from_parsed_line_ast(input_line: ((&str, Vec<(&str, Vec<(&str, f32)>)>), Vec<((&str, &str), Vec<f32>)>)) -> Self {        
 
-    fn parse_string(input_line: String) -> (Vec<(String, HashMap<String, f32>)>, HashMap<String, ParamRow>) {
-        let mut seq = Vec::new();
-        // split basic pattern and parameter lists
-        let mut pattern_with_modifiers: Vec<&str> = input_line.split("@").collect();
-
-        // "parse" pattern
-        let iter = pattern_with_modifiers.remove(0).split_ascii_whitespace();
+        let pattern_ast = input_line.0;
+        let param_asts = input_line.1;
         
-        for event in iter {            
-            let event_with_params: Vec<&str> = event.split(";").collect();
-            
-            let event_type = event_with_params[0];
-            let mut param_map = HashMap::new();
-
-            for par in &event_with_params[1..] {
-                let par_val: Vec<&str> = par.split("=").collect();
-                param_map.insert(par_val[0].to_string(), par_val[1].parse().unwrap());
-            }
-            
-            seq.push((event_type.to_string(), param_map));
+        let mut main_events = HashMap::new();
+        let mut event_hashes = Vec::new();
+        
+        for parsed_event in pattern_ast.1.iter() {
+            let main_event = MainEvent::from_parsed_input(parsed_event.0.to_string(), &parsed_event.1);
+            let main_event_hash = calculate_hash::<MainEvent>(&main_event);
+            main_events.insert(main_event_hash, main_event);
+            event_hashes.push(main_event_hash);
         }
 
-        let mut param_row_map = HashMap::new();
-        
-        // "parse" parameter lists
-        for param_mod in pattern_with_modifiers.iter() {            
-
-            let param_mods: Vec<&str> = param_mod.split(":").collect();
-
-            let param = param_mods[0];
-            let mut param_info : Vec<&str> =  param_mods[1].split_ascii_whitespace().collect();
-
-            let mut param_row = ParamRow::new(match param_info.remove(0) {
-                "cyc" => ParamRowMode::Cycle,
-                "rnd" => ParamRowMode::Random,
-                _ => ParamRowMode::Cycle,
-            });
-                                    
-            for val in param_info {
-                param_row.values.push(val.parse().unwrap());
-            }
-
-            param_row_map.insert(param.to_string(), param_row);
+        let mut param_row_map: HashMap<String, Box<dyn SequenceGenerator<f32>>> = HashMap::new();
+        for parsed_param_seq in param_asts.iter() {
+            param_row_map.insert(
+                (parsed_param_seq.0).0.to_string(),
+                match (parsed_param_seq.0).1 {
+                    "rnd" => Box::new(RandomSequenceGenerator::from_seq(&parsed_param_seq.1)),
+                    "cyc" => Box::new(CycleSequenceGenerator::from_seq(&parsed_param_seq.1)),
+                    //"learn" => Box::new(PfaSequenceGenerator::from_seq(&parsed_param_seq.1)),
+                    _ => Box::new(CycleSequenceGenerator::from_seq(&parsed_param_seq.1)),
+                });            
         }
-        
-        (seq, param_row_map)
-    }
-
-    /// Create an event sequence from a string.
-    pub fn from_string(input_line: String) -> Self {
-        let (seq, param_row_map) = EventSequence::parse_string(input_line);
-
+                
         EventSequence {
-            events: seq,
-            param_rows: param_row_map,
-            idx: 0,
+            event_refs: main_events,
+            events: match pattern_ast.0 {
+                "rnd" => Box::new(RandomSequenceGenerator::from_seq(&event_hashes)),
+                "cyc" => Box::new(CycleSequenceGenerator::from_seq(&event_hashes)),
+                _ => Box::new(CycleSequenceGenerator::from_seq(&event_hashes))
+            },
+            param_generators: param_row_map,
         }
     }
 
     /// Update an existing sequence from a string.
-    pub fn update_sequence(&mut self, input_line: String) {
-        let (seq, param_row_map) = EventSequence::parse_string(input_line);
-
-        self.events = seq;
-        self.param_rows = param_row_map;
-        
-        if self.idx >= self.events.len() {
-            self.idx = self.events.len() - 1;
-        }
+    pub fn update_sequence(&mut self, input_line: ((&str, Vec<(&str, Vec<(&str, f32)>)>), Vec<((&str, &str), Vec<f32>)>)) {
+        self.event_refs.clear();
+        //self.events.clear();
     }
 
     /// get the next event in the sequence
     pub fn get_next_event(&mut self) -> (String, HashMap<String, f32>) {
-        
-        let cur_idx = self.idx;
-
-        if self.idx + 1 == self.events.len() {
-            self.idx = 0;
-        } else {
-            self.idx += 1;
-        }
-        
-        let (event_name, event_params) = &self.events[cur_idx];
-
-        // for now only cycle mode ...
         let mut final_param_map: HashMap<String, f32> = HashMap::new();
-        // only for non-empty events ...
-        if event_name != "~" {
-            for (k, v) in self.param_rows.iter_mut() {
+        match self.events.get_next() {
+            Some(ev_hash) => {
+                let ev = &self.event_refs[&ev_hash];
+                if ev.name == "~" {
+                    return ("~".to_string(), final_param_map)
+                }
+                // pref for dyn params, so insert fixed pars first (might be overwritten)
+                for (par, val) in ev.params.iter() {
+                    final_param_map.insert(par.to_string(), *val);
+                }
 
-                match v.mode {
-                    ParamRowMode::Cycle => {
-                        final_param_map.insert(k.to_string(), v.values[v.idx]);
+                // pref for dyn params, so insert fixed pars first (might be overwritten)
+                for (par, gen) in self.param_generators.iter_mut() {
+                    match gen.get_next() {
+                        Some(val) => final_param_map.insert(par.to_string(), val),
+                        None => None
+                    };
+                }
                 
-                        if v.idx + 1 == v.values.len() {
-                            v.idx = 0;
-                        } else {
-                            v.idx += 1;
-                        }
-                    },
-                    ParamRowMode::Random => {
-                        // why do i need to dereference here ?
-                        let rnd_idx = Math::random() * v.values.len() as f64 - 1.0;
-                        final_param_map.insert(k.to_string(), v.values[rnd_idx.round() as usize]);
-                    },
-                };
-                
-            }
-        }
-        
-        // merge in event params (explicit event param overwrites modifier)
-        for (k, v) in event_params.iter() {
-            final_param_map.insert(k.to_string(), *v);
-        }
-        
-        (event_name.to_string(), final_param_map)
+                (ev.name.clone(), final_param_map)
+            },
+            None => ("~".to_string(), final_param_map)
+        }                                               
     }
 }
 
@@ -203,15 +194,23 @@ impl Scheduler {
 
                 for line in all_lines.lines() {
                     let trimmed_line = line.trim();
+                    
                     if !trimmed_line.is_empty() && !trimmed_line.starts_with("#") {
-                        if self.event_sequences.len() > seq_idx {
-                            self.event_sequences[seq_idx].update_sequence(trimmed_line.to_string());
-                        } else {
-                            self.event_sequences.push(EventSequence::from_string(trimmed_line.to_string()));
-                        }
+                        match parser::pattern_line(trimmed_line) {
+                            Ok(ast) => {
+                                if self.event_sequences.len() > seq_idx {
+                                    self.event_sequences[seq_idx].update_sequence(ast.1);
+                                } else {
+                                    self.event_sequences.push(EventSequence::from_parsed_line_ast(ast.1));
+                                }
+                            },
+                            Err(err) => log!("invalid line! {:?}, {}", err, trimmed_line) // ??
+                        };
+                        
                         seq_idx += 1;                        
                     }
                 }
+
                 // check if we need to remove some sequnces because the number of lines got reduced ...
                 if seq_idx < self.event_sequences.len() {
                     self.event_sequences.truncate(seq_idx);
