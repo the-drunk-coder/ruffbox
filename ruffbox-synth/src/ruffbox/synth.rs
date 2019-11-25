@@ -17,36 +17,36 @@ pub enum SynthState {
 #[allow(dead_code)]
 #[derive(Clone,Copy)]
 pub enum SynthParameter {
-    Attack,    
-    Decay,
-    DelayDampeningFrequency,
-    DelayFeedback,
-    DelayMix,
-    DelayTime,
-    Duration,    
-    PitchFrequency,
-    PitchNote,
-    HighpassCutoffFrequency,
-    HighpassQFactor,
-    Level,
-    LowpassCutoffFrequency,
-    LowpassQFactor,
-    LowpassFilterDistortion,
-    PeakFrequency,
-    PeakGain,
-    PeakQFactor,
-    Pulsewidth,
-    PlaybackRate,
-    PlaybackStart,
-    PlaybackLoop,
-    Release,
-    ReverbDampening,
-    ReverbMix,
-    ReverbRoomsize,
-    SampleBufferNumber,
-    Samplerate,
-    StereoPosition,
-    Sustain,
+    Attack,                     // 0
+    Decay,                      // 1
+    DelayDampeningFrequency,    // 2
+    DelayFeedback,              // 3
+    DelayMix,                   // 4
+    DelayTime,                  // 5
+    Duration,                   // 6
+    PitchFrequency,             // 7
+    PitchNote,                  // 8 
+    HighpassCutoffFrequency,    // 9
+    HighpassQFactor,            // 10
+    Level,                      // 11
+    LowpassCutoffFrequency,     // 12
+    LowpassQFactor,             // 13 
+    LowpassFilterDistortion,    // 14
+    PeakFrequency,              // 15 
+    PeakGain,                   // 16
+    PeakQFactor,                // 17
+    Pulsewidth,                 // 18
+    PlaybackRate,               // 19
+    PlaybackStart,              // 20
+    PlaybackLoop,               // 21
+    Release,                    // 22
+    ReverbDampening,            // 23
+    ReverbMix,                  // 24
+    ReverbRoomsize,             // 25
+    SampleBufferNumber,         // 26
+    Samplerate,                 // 27 
+    StereoPosition,             // 28
+    Sustain,                    // 29
 }
 
 pub enum SourceType {

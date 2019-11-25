@@ -14,8 +14,22 @@ use nom::{
 
 // param names can be fixed for now ... 
 pub fn param_name(input: &str) -> IResult<&str, &str> {
-    alt((tag("pitch"), tag("dur"), tag("lvl"), tag("rate"),
-         tag("lp-freq"), tag("lp-dist"), tag("rev"), tag("del")))(input)
+    alt((tag("atk"),
+         tag("dec"),         
+         tag("del"),         
+         tag("dur"),
+         tag("freq"),         
+         tag("lvl"),
+         tag("lp-freq"),
+         tag("lp-q"),
+         tag("lp-dist"),         
+         tag("pw"),
+         tag("rate"),
+         tag("start"),
+         tag("rel"),         
+         tag("rev"),                           
+         tag("pos"),
+         tag("sus")))(input)
 }
 
 pub fn param(input: &str) -> IResult<&str, (&str, f32)> {
@@ -28,7 +42,7 @@ pub fn param_list(input: &str) -> IResult<&str, Vec<(&str, f32)>> {
 
 // for custom sample events, this would need to be replaced by a freeform string function ... 
 pub fn event_name(input: &str) -> IResult<&str, &str> {
-    alt((tag("sine"), tag("sqr"), tag("saw"), tag("sqr"), tag("hh"), tag("bd"), tag("sn"), tag("~")))(input)
+    alt((tag("sine"), tag("sqr"), tag("saw"), tag("casio"), tag("sqr"), tag("hh"), tag("bd"), tag("sn"), tag("~")))(input)
 }
 
 // sine;freq=100.0;dur=200
