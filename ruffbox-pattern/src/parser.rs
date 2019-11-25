@@ -14,7 +14,8 @@ use nom::{
 
 // param names can be fixed for now ... 
 pub fn param_name(input: &str) -> IResult<&str, &str> {
-    alt((tag("pitch"), tag("dur"), tag("lvl"), tag("rate"), tag("lp-freq"), tag("lp-dist")))(input)
+    alt((tag("pitch"), tag("dur"), tag("lvl"), tag("rate"),
+         tag("lp-freq"), tag("lp-dist"), tag("rev"), tag("del")))(input)
 }
 
 pub fn param(input: &str) -> IResult<&str, (&str, f32)> {
@@ -27,7 +28,7 @@ pub fn param_list(input: &str) -> IResult<&str, Vec<(&str, f32)>> {
 
 // for custom sample events, this would need to be replaced by a freeform string function ... 
 pub fn event_name(input: &str) -> IResult<&str, &str> {
-    alt((tag("sine"), tag("sqare"), tag("sqr"), tag("hh"), tag("bd"), tag("sn"), tag("~")))(input)
+    alt((tag("sine"), tag("sqr"), tag("saw"), tag("sqr"), tag("hh"), tag("bd"), tag("sn"), tag("~")))(input)
 }
 
 // sine;freq=100.0;dur=200
@@ -56,7 +57,7 @@ pub fn pattern_func_name(input: &str) -> IResult<&str, &str> {
 }
 
 pub fn param_func_name(input: &str) -> IResult<&str, &str> {
-    alt((tag("bounce"), tag("brownian")))(input)
+    alt((tag("bounce"), tag("ramp")))(input)
 }
 
 pub fn func_name(input: &str) -> IResult<&str, &str> {

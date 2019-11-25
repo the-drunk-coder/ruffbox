@@ -2,6 +2,8 @@ use rand::seq::SliceRandom;
 use std::hash::Hash;
 use vom_rs::safe_pfa::Pfa;
 
+use decorum::N32;
+
 pub trait SequenceGenerator<T> {
     fn get_next(&mut self) -> Option<T>;
 }
@@ -91,30 +93,30 @@ impl <T: Eq + Copy + Hash> SequenceGenerator<T> for PfaSequenceGenerator<T> {
 //////////
 
 pub struct RampSequenceGenerator {
-    min: f32,
-    inc: f32,
-    steps: usize,
-    step_count: usize,
+    min: N32,
+    inc: N32,
+    steps: N32,
+    step_count: N32,
 }
 
 impl RampSequenceGenerator {
-    pub fn from_params(min: f32, max: f32, steps: usize) -> Self {        
+    pub fn from_params(min: N32, max: N32, steps: N32) -> Self {        
         RampSequenceGenerator {            
             min: min,
-            inc: (max - min) / (steps as f32),
+            inc: (max - min) / steps,
             steps: steps,
-            step_count: 0,
+            step_count: (0.0).into(),
         }
     }
 }
 
 // fixed to second order, for now
-impl SequenceGenerator<f32> for RampSequenceGenerator {    
-    fn get_next(&mut self) -> Option<f32> {
-        let cur = self.min + self.step_count as f32 * self.inc;
-        self.step_count += 1;
+impl SequenceGenerator<N32> for RampSequenceGenerator {    
+    fn get_next(&mut self) -> Option<N32> {
+        let cur = self.min + self.step_count * self.inc;
+        self.step_count = self.step_count + 1.0;
         if self.step_count > self.steps {
-            self.step_count = 0;
+            self.step_count = (0.0).into();
         }
         Some(cur)
     }
@@ -127,33 +129,73 @@ impl SequenceGenerator<f32> for RampSequenceGenerator {
 // sinusoidal bounce
 
 pub struct BounceSequenceGenerator {
-    min: f32,
-    degree_inc: f32,
-    range: f32,
-    steps: usize,
-    step_count: usize,
+    min: N32,
+    degree_inc: N32,
+    range: N32,
+    steps: N32,
+    step_count: N32,
 }
 
 impl BounceSequenceGenerator {
-    pub fn from_params(min: f32, max: f32, steps: usize) -> Self {        
+    pub fn from_params(min: N32, max: N32, steps: N32) -> Self {
+        let mut dec_inc:N32 = (360.0).into();
+        dec_inc = dec_inc / steps;
         BounceSequenceGenerator {                        
             min: min,
             range: max - min,
-            degree_inc: 360.0 / steps as f32,            
+            degree_inc: dec_inc,            
             steps: steps,
-            step_count: 0,
+            step_count: (0.0).into(),
         }
     }
 }
 
 // fixed to second order, for now
-impl SequenceGenerator<f32> for BounceSequenceGenerator {    
-    fn get_next(&mut self) -> Option<f32> {
-        let degree = (self.degree_inc * (self.step_count as f32 % self.steps as f32)) % 360.0;
-        let abs_sin = degree.to_radians().sin().abs();
-        let cur = self.min + (abs_sin * self.range);
-        self.step_count += 1;
-        Some(cur)
+impl SequenceGenerator<N32> for BounceSequenceGenerator {    
+    fn get_next(&mut self) -> Option<N32> {
+        // why doesn't rust has a hashable float ?????
+        let deg_inc_raw:f32 = self.degree_inc.into();
+        let mut step_count_raw:f32 = self.step_count.into();
+        let steps_raw:f32 = self.steps.into();
+        let min_raw:f32 = self.min.into();
+        let range_raw:f32 = self.range.into();
+        
+        
+        let degree:f32 = (deg_inc_raw * (step_count_raw % steps_raw)) % 360.0;
+        let abs_sin:f32 = degree.to_radians().sin().abs().into();
+        
+        let cur:f32 = min_raw + (abs_sin * range_raw);
+
+        step_count_raw += 1.0;
+        self.step_count = step_count_raw.into(); 
+        
+        Some(cur.into())
     }
 }
 
+#[cfg(test)]
+mod tests {
+    // Note this useful idiom: importing names from outer (for mod tests) scope.
+    use super::*;
+        
+    #[test]
+    fn test_bounce_gen() {
+        let mut bounce_gen = BounceSequenceGenerator::from_params((20.0).into(), (200.0).into(), (10.0).into());
+        let mut results = Vec::new();
+        for _ in 0..10 {
+            results.push(bounce_gen.get_next());
+        }
+        println!("Result: {:?}", results);
+    }
+
+    #[test]
+    fn test_ramp_gen() {
+        let mut ramp_gen = RampSequenceGenerator::from_params((20.0).into(), (200.0).into(), (10.0).into());
+        let mut results = Vec::new();
+        for _ in 0..10 {
+            results.push(ramp_gen.get_next());
+        }
+        println!("Result: {:?}", results);
+    }
+
+}

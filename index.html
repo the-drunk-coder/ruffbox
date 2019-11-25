@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta name="viewport" content="width=600,initial-scale=1">
-    <script src="https://g200kg.github.io/webaudio-controls/webaudio-controls.js" ></script>
+    <script src="js/webaudio-controls.js" ></script>
   </head>
 
   <body>
@@ -14,11 +14,9 @@
     
     <h2> Scriptable Sequencer </h2>    
     <div>
-      <textarea id="code_input" style="float: left; width:400px; height:300px; vertical-align:top; margin-right: 20px; padding-right: 0px;">
-bd ~ ~ ~ bd ~ ~ ~ bd ~ ~ ~ bd ~ ~ ~
-~ ~ hh ~ ~ ~ hh ~ ~ ~ hh ~ ~ ~ hh ~
-~ ~ ~ ~ sn ~ ~ ~ ~ ~ ~ ~ sn ~ ~ ~ 
-~ ~ casio ~ ~ ~ casio ~ ~ casio ~ ~ ~
+      <textarea id="code_input" style="float: left; width:800px; height:300px; vertical-align:top; margin-right: 20px; padding-right: 0px;">
+cyc >> bd ~ ~ ~ sn ~ ~ ~ @del: rnd >> 0.0 0.1 0.2 @rev: rnd >> 0.0 0.1 0.2
+cyc >> saw ~ ~ saw ~ @pitch: cyc >> 400 600 300 900 
       </textarea>
       
       <div>

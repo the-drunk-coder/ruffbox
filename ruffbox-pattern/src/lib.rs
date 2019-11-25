@@ -13,6 +13,8 @@ use std::collections::HashMap;
 
 use crate::seqgen::*;
 
+use decorum::N32;
+
 // A macro to provide `println!(..)`-style syntax for `console.log` logging.
 macro_rules! log {
     ( $( $t:tt )* ) => {
@@ -30,15 +32,15 @@ fn calculate_hash<T: Hash>(t: &T) -> u64 {
 
 struct MainEvent {
     name: String,
-    params: HashMap<String, f32>,
+    params: HashMap<String, N32>,
 }
 
 impl Hash for MainEvent {
      fn hash<H: Hasher>(&self, state: &mut H) {
          self.name.hash(state);
-         for (par, _val) in self.params.iter() {
+         for (par, val) in self.params.iter() {
              par.hash(state);
-             //(*val).hash(state);
+             (*val).hash(state);
          }
      }    
 }
@@ -48,7 +50,7 @@ impl MainEvent {
         let mut param_map = HashMap::new();
 
         for param_tuple in input_params {
-            param_map.insert(param_tuple.0.to_string(), param_tuple.1);
+            param_map.insert(param_tuple.0.to_string(), param_tuple.1.into());
         }
         
         MainEvent {
@@ -75,13 +77,65 @@ impl PartialEq for MainEvent {
 struct EventSequence {
     event_refs: HashMap<EventHash, MainEvent>,
     events: Box<dyn SequenceGenerator<EventHash>>,
-    param_generators: HashMap<String, Box<dyn SequenceGenerator<f32>>>
+    param_generators: HashMap<String, Box<dyn SequenceGenerator<N32>>>
 }
 
 impl EventSequence {
-   
+        
     /// Create an event sequence from a string.    
     pub fn from_parsed_line_ast(input_line: ((&str, Vec<(&str, Vec<(&str, f32)>)>), Vec<((&str, &str), Vec<f32>)>)) -> Self {        
+        let pattern_ast = input_line.0;
+        let param_asts = input_line.1;
+        
+        let mut main_events = HashMap::new();
+        let mut event_hashes = Vec::new();
+        
+        for parsed_event in pattern_ast.1.iter() {
+            let main_event = MainEvent::from_parsed_input(parsed_event.0.to_string(), &parsed_event.1);
+            let main_event_hash = calculate_hash::<MainEvent>(&main_event);
+            main_events.insert(main_event_hash, main_event);
+            event_hashes.push(main_event_hash);
+        }
+
+        let mut param_row_map: HashMap<String, Box<dyn SequenceGenerator<N32>>> = HashMap::new();
+        
+        for parsed_param_seq in param_asts.iter() {
+            let mut param_conv:Vec<N32> = Vec::new();
+            for raw_float in &parsed_param_seq.1 {
+                param_conv.push((*raw_float).into())
+            }
+
+            param_row_map.insert(
+                (parsed_param_seq.0).0.to_string(),
+                match (parsed_param_seq.0).1 {
+                    "rnd" => Box::new(RandomSequenceGenerator::from_seq(&param_conv)),
+                    "cyc" => Box::new(CycleSequenceGenerator::from_seq(&param_conv)),
+                    "learn" => Box::new(PfaSequenceGenerator::from_seq(&param_conv)),
+                    "bounce" => Box::new(BounceSequenceGenerator::from_params(param_conv[0], param_conv[1], param_conv[2])),
+                    "ramp" => Box::new(RampSequenceGenerator::from_params(param_conv[0], param_conv[1], param_conv[2])),
+                    //"brownian" => Box::new(BounceSequenceGenerator::from_params(param_conv[0], param_conv[1], param_conv[2])),
+                    _ => Box::new(CycleSequenceGenerator::from_seq(&param_conv)),
+                });            
+        }
+        
+                
+        EventSequence {
+            event_refs: main_events,
+            events: match pattern_ast.0 {
+                "rnd" => Box::new(RandomSequenceGenerator::from_seq(&event_hashes)),
+                "cyc" => Box::new(CycleSequenceGenerator::from_seq(&event_hashes)),
+                "learn" => Box::new(PfaSequenceGenerator::from_seq(&event_hashes)),
+                _ => Box::new(CycleSequenceGenerator::from_seq(&event_hashes))
+            },
+            
+            param_generators: param_row_map,
+        }
+    }
+
+    /// Update an existing sequence from a string.
+    pub fn update_sequence(&mut self, input_line: ((&str, Vec<(&str, Vec<(&str, f32)>)>), Vec<((&str, &str), Vec<f32>)>)) {
+        self.event_refs.clear();
+        self.param_generators.clear();
 
         let pattern_ast = input_line.0;
         let param_asts = input_line.1;
@@ -96,33 +150,36 @@ impl EventSequence {
             event_hashes.push(main_event_hash);
         }
 
-        let mut param_row_map: HashMap<String, Box<dyn SequenceGenerator<f32>>> = HashMap::new();
+        let mut param_row_map: HashMap<String, Box<dyn SequenceGenerator<N32>>> = HashMap::new();
+        
         for parsed_param_seq in param_asts.iter() {
+            let mut param_conv:Vec<N32> = Vec::new();
+            for raw_float in &parsed_param_seq.1 {
+                param_conv.push((*raw_float).into())
+            }
+
             param_row_map.insert(
                 (parsed_param_seq.0).0.to_string(),
                 match (parsed_param_seq.0).1 {
-                    "rnd" => Box::new(RandomSequenceGenerator::from_seq(&parsed_param_seq.1)),
-                    "cyc" => Box::new(CycleSequenceGenerator::from_seq(&parsed_param_seq.1)),
-                    //"learn" => Box::new(PfaSequenceGenerator::from_seq(&parsed_param_seq.1)),
-                    _ => Box::new(CycleSequenceGenerator::from_seq(&parsed_param_seq.1)),
+                    "rnd" => Box::new(RandomSequenceGenerator::from_seq(&param_conv)),
+                    "cyc" => Box::new(CycleSequenceGenerator::from_seq(&param_conv)),
+                    "learn" => Box::new(PfaSequenceGenerator::from_seq(&param_conv)),
+                    "bounce" => Box::new(BounceSequenceGenerator::from_params(param_conv[0], param_conv[1], param_conv[2])),
+                    "ramp" => Box::new(RampSequenceGenerator::from_params(param_conv[0], param_conv[1], param_conv[2])),
+                    //"brownian" => Box::new(BounceSequenceGenerator::from_params(param_conv[0], param_conv[1], param_conv[2])),
+                    _ => Box::new(CycleSequenceGenerator::from_seq(&param_conv)),
                 });            
         }
                 
-        EventSequence {
-            event_refs: main_events,
-            events: match pattern_ast.0 {
-                "rnd" => Box::new(RandomSequenceGenerator::from_seq(&event_hashes)),
-                "cyc" => Box::new(CycleSequenceGenerator::from_seq(&event_hashes)),
-                _ => Box::new(CycleSequenceGenerator::from_seq(&event_hashes))
-            },
-            param_generators: param_row_map,
-        }
-    }
-
-    /// Update an existing sequence from a string.
-    pub fn update_sequence(&mut self, input_line: ((&str, Vec<(&str, Vec<(&str, f32)>)>), Vec<((&str, &str), Vec<f32>)>)) {
-        self.event_refs.clear();
-        //self.events.clear();
+        self.event_refs = main_events;
+        self.events = match pattern_ast.0 {
+            "rnd" => Box::new(RandomSequenceGenerator::from_seq(&event_hashes)),
+            "cyc" => Box::new(CycleSequenceGenerator::from_seq(&event_hashes)),
+            "learn" => Box::new(PfaSequenceGenerator::from_seq(&event_hashes)),
+            _ => Box::new(CycleSequenceGenerator::from_seq(&event_hashes))
+        };
+        
+        self.param_generators = param_row_map;                
     }
 
     /// get the next event in the sequence
@@ -136,13 +193,13 @@ impl EventSequence {
                 }
                 // pref for dyn params, so insert fixed pars first (might be overwritten)
                 for (par, val) in ev.params.iter() {
-                    final_param_map.insert(par.to_string(), *val);
+                    final_param_map.insert(par.to_string(), (*val).into());
                 }
 
                 // pref for dyn params, so insert fixed pars first (might be overwritten)
                 for (par, gen) in self.param_generators.iter_mut() {
                     match gen.get_next() {
-                        Some(val) => final_param_map.insert(par.to_string(), val),
+                        Some(val) => final_param_map.insert(par.to_string(), val.into()),
                         None => None
                     };
                 }
