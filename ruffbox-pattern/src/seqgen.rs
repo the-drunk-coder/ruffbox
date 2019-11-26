@@ -56,9 +56,13 @@ impl <T: Copy> CycleSequenceGenerator<T> {
     }
 
     pub fn from_seq_with_index(seq: &Vec<T>, idx: usize) -> Self {
+        let mut idx_clamp = idx;
+        if seq.len() <= idx {
+            idx_clamp = seq.len() - 1;
+        }
         CycleSequenceGenerator {
             items: seq.to_vec(),
-            index: idx,
+            index: idx_clamp,
         }
     }    
 }
