@@ -14,7 +14,7 @@
     
     <h2> Scriptable Sequencer </h2>    
     <div>
-      <textarea id="code_input" style="float: left; width:800px; height:300px; vertical-align:top; margin-right: 20px; padding-right: 0px;">
+      <textarea id="code_input" style="float: left; width:800px; height:400px; vertical-align:top; margin-right: 20px; padding-right: 0px;">
 cyc >> bd ~ ~ ~ sn ~ ~ ~ @del: rnd >> 0.0 0.1 0.2 @rev: rnd >> 0.0 0.1 0.2
 cyc >> saw ~ ~ saw ~ @freq: cyc >> 100 150 200 80 @lp-freq: bounce >> 200 500 20
       </textarea>
@@ -22,16 +22,19 @@ cyc >> saw ~ ~ saw ~ @freq: cyc >> 100 150 200 80 @lp-freq: bounce >> 200 500 20
       <div>
 	<webaudio-switch id="evaluate-loop" defval="0" value="0" type="kick">Evaluate</webaudio-switch> (Ctrl + Return)<br/> 
 	<webaudio-switch id="start-scheduler" defval="0" value="0" type="toggle">Start/Stop</webaudio-switch> (Ctrl + .) <br/><br/>
-	<b>Tempo:</b>  <input type="number" id="tempo" value="128" style="width:50px"> (milliseconds per 16th, on next eval)<br/>
+	<b>Tempo:</b>  <input type="number" id="tempo" value="128" style="width:50px"> (milliseconds per sound event, on next eval)<br/>
       </div>
       
       <br/>
-      <b>Syntax:</b> Each symbol is a 16th note, each line is a loop! <br/><br/>      
-      bd = bassdrum<br/>
-      sn = snare <br/>
-      casio = beep <br/>
-      hh = hi-hat <br/>
-      ~ = silence <br/>     
+      <b>Usage:</b> Each symbol is a sound event, each line is a loop! <br/>
+      <b>Time:</b> All sequences run over a fixed time grid! <br/><br/>
+      <b>Sound Events:</b><br/>
+      <i>Samples: </i> bd, sn, hh, casio = bassdrum, snare, hihat, casio beep <br/> 
+      <i>Synths: </i> saw, sqr, sine = sawtooth, squarewave, sinewave <br/>
+      <i>Parameters: </i> rate (samples only), freq (synths only), pos, lp-freq, lp-q, lp-dist, rev, del, atk, rel, dur<br/>
+      ~ = silence <br/><br/>
+      <b>Sequence Generators:</b> cyc = cycle, rnd = random, learn = markov chain, bounce = half-rectified sine curve, ramp = ramp <br/>            
+      <b>Pattern Anatomy:</b> [cyc | rnd | learn] >> [sound events] @PARAM: [cyc | rnd | learn | bounce | ramp] >> [seq | param list]
     </div>
     <br/><br/><br/>
 
