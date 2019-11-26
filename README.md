@@ -12,6 +12,15 @@ Currently needs Chromium/Chrome 74+ for the *AudioWorklet*, and the *#enable-exp
 * **js/setup.js** contains the JavaScript glue code to put things together, load the audio context etc.
 * **js/worklet.js** contains the AudioWorkletProcessor.
 
+## Running Locally
+* Make sure you have Python3 for the http server!
+* Checkout repository.
+* Run `build.sh`.
+* Run `server.sh`.
+* Open your browser (Opera or Chrome) and go to https://localhost:1234. 
+
+The script displays https://0.0.0.0:1234, but that won't work because it's not recognized as local. Use localhost!
+
 ## Basic Idea
 
 This basically is (or is eveolving from) a proof-of-concept on how to make a multi-threaded audio application that runs in a web browser.
