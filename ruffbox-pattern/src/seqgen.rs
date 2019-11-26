@@ -198,4 +198,18 @@ mod tests {
         println!("Result: {:?}", results);
     }
 
+    #[test]
+    fn test_pfa_gen() {
+        let in_vec:Vec<N32> = vec![(20.0).into(), (200.0).into(), (10.0).into(), (20.0).into(), (200.0).into(), (10.0).into(),
+                          (200.0).into(), (200.0).into(), (10.0).into(), (10.0).into(), (200.0).into(), (10.0).into(),
+                          (200.0).into(), (20.0).into(), (10.0).into(), (20.0).into(), (20.0).into(), (10.0).into()];
+        let mut pfa_gen = PfaSequenceGenerator::from_seq(&in_vec);
+        let mut results:Vec<N32> = Vec::new();
+        for _ in 0..10 {
+            println!("Result: {:?}", pfa_gen.get_next());
+            
+        }
+        println!("Result: {:?}", results);
+    }
+
 }
