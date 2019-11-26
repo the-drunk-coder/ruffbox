@@ -4,8 +4,9 @@ use vom_rs::safe_pfa::Pfa;
 
 use decorum::N32;
 
-pub trait SequenceGenerator<T> {
+pub trait SequenceGenerator<T, S> {
     fn get_next(&mut self) -> Option<T>;
+    fn get_state(&self) -> S;
 }
 
 ////////////
@@ -24,12 +25,16 @@ impl <T: Copy> RandomSequenceGenerator<T> {
     }
 }
 
-impl <T: Copy> SequenceGenerator<T> for RandomSequenceGenerator<T> {    
+impl <T: Copy> SequenceGenerator<T, usize> for RandomSequenceGenerator<T> {    
     fn get_next(&mut self) -> Option<T> {
         match self.items.choose(&mut rand::thread_rng()) {
             Some(thing) => Some(*thing),
             None => None                
         }
+    }
+
+    fn get_state(&self) -> usize {
+        0
     }
 }
 
@@ -49,9 +54,16 @@ impl <T: Copy> CycleSequenceGenerator<T> {
             index: 0,
         }
     }
+
+    pub fn from_seq_with_index(seq: &Vec<T>, idx: usize) -> Self {
+        CycleSequenceGenerator {
+            items: seq.to_vec(),
+            index: idx,
+        }
+    }    
 }
 
-impl <T: Copy> SequenceGenerator<T> for CycleSequenceGenerator<T> {    
+impl <T: Copy> SequenceGenerator<T, usize> for CycleSequenceGenerator<T> {    
     fn get_next(&mut self) -> Option<T> {
         let item = self.items[self.index];
 
@@ -59,9 +71,13 @@ impl <T: Copy> SequenceGenerator<T> for CycleSequenceGenerator<T> {
         
         if self.index >= self.items.len() {
             self.index = 0;
-        } 
-
+        }
+                
         Some(item)        
+    }
+
+    fn get_state(&self) -> usize {
+        self.index
     }
 }
 
@@ -82,9 +98,13 @@ impl <T: Eq + Copy + Hash> PfaSequenceGenerator<T> {
 }
 
 // fixed to second order, for now 
-impl <T: Eq + Copy + Hash> SequenceGenerator<T> for PfaSequenceGenerator<T> {    
+impl <T: Eq + Copy + Hash> SequenceGenerator<T, usize> for PfaSequenceGenerator<T> {    
     fn get_next(&mut self) -> Option<T> {
         self.pfa.next_symbol()
+    }
+
+    fn get_state(&self) -> usize {
+        0
     }
 }
 
@@ -111,7 +131,7 @@ impl RampSequenceGenerator {
 }
 
 // fixed to second order, for now
-impl SequenceGenerator<N32> for RampSequenceGenerator {    
+impl SequenceGenerator<N32, usize> for RampSequenceGenerator {    
     fn get_next(&mut self) -> Option<N32> {
         let cur = self.min + self.step_count * self.inc;
         self.step_count = self.step_count + 1.0;
@@ -119,6 +139,11 @@ impl SequenceGenerator<N32> for RampSequenceGenerator {
             self.step_count = (0.0).into();
         }
         Some(cur)
+    }
+
+    fn get_state(&self) -> usize {
+        let state_raw:f32 = self.step_count.into();
+        state_raw as usize
     }
 }
 
@@ -151,7 +176,7 @@ impl BounceSequenceGenerator {
 }
 
 // fixed to second order, for now
-impl SequenceGenerator<N32> for BounceSequenceGenerator {    
+impl SequenceGenerator<N32, usize> for BounceSequenceGenerator {    
     fn get_next(&mut self) -> Option<N32> {
         // why doesn't rust has a hashable float ?????
         let deg_inc_raw:f32 = self.degree_inc.into();
@@ -159,8 +184,7 @@ impl SequenceGenerator<N32> for BounceSequenceGenerator {
         let steps_raw:f32 = self.steps.into();
         let min_raw:f32 = self.min.into();
         let range_raw:f32 = self.range.into();
-        
-        
+                
         let degree:f32 = (deg_inc_raw * (step_count_raw % steps_raw)) % 360.0;
         let abs_sin:f32 = degree.to_radians().sin().abs().into();
         
@@ -170,6 +194,11 @@ impl SequenceGenerator<N32> for BounceSequenceGenerator {
         self.step_count = step_count_raw.into(); 
         
         Some(cur.into())
+    }
+
+    fn get_state(&self) -> usize {
+        let state_raw:f32 = self.step_count.into();
+        state_raw as usize
     }
 }
 

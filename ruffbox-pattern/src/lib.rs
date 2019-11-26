@@ -76,8 +76,8 @@ impl PartialEq for MainEvent {
 /// A simple event sequence represented by a vector of strings and params
 struct EventSequence {
     event_refs: HashMap<EventHash, MainEvent>,
-    events: Box<dyn SequenceGenerator<EventHash>>,
-    param_generators: HashMap<String, Box<dyn SequenceGenerator<N32>>>
+    events: Box<dyn SequenceGenerator<EventHash, usize>>,
+    param_generators: HashMap<String, Box<dyn SequenceGenerator<N32, usize>>>
 }
 
 impl EventSequence {
@@ -97,7 +97,7 @@ impl EventSequence {
             event_hashes.push(main_event_hash);
         }
 
-        let mut param_row_map: HashMap<String, Box<dyn SequenceGenerator<N32>>> = HashMap::new();
+        let mut param_row_map: HashMap<String, Box<dyn SequenceGenerator<N32, usize>>> = HashMap::new();
         
         for parsed_param_seq in param_asts.iter() {
             let mut param_conv:Vec<N32> = Vec::new();
@@ -142,15 +142,8 @@ impl EventSequence {
         
         let mut main_events = HashMap::new();
         let mut event_hashes = Vec::new();
-        
-        for parsed_event in pattern_ast.1.iter() {
-            let main_event = MainEvent::from_parsed_input(parsed_event.0.to_string(), &parsed_event.1);
-            let main_event_hash = calculate_hash::<MainEvent>(&main_event);
-            main_events.insert(main_event_hash, main_event);
-            event_hashes.push(main_event_hash);
-        }
-
-        let mut param_row_map: HashMap<String, Box<dyn SequenceGenerator<N32>>> = HashMap::new();
+                
+        //let mut param_row_map: HashMap<String, Box<dyn SequenceGenerator<N32>>> = HashMap::new();
         
         for parsed_param_seq in param_asts.iter() {
             let mut param_conv:Vec<N32> = Vec::new();
@@ -158,11 +151,17 @@ impl EventSequence {
                 param_conv.push((*raw_float).into())
             }
 
-            param_row_map.insert(
-                (parsed_param_seq.0).0.to_string(),
+            let key = (parsed_param_seq.0).0.to_string();
+            let mut state = 0;
+            if self.param_generators.contains_key(&key) {
+                state = self.param_generators[&key].get_state();
+            }
+            
+            self.param_generators.insert(
+                key,
                 match (parsed_param_seq.0).1 {
                     "rnd" => Box::new(RandomSequenceGenerator::from_seq(&param_conv)),
-                    "cyc" => Box::new(CycleSequenceGenerator::from_seq(&param_conv)),
+                    "cyc" => Box::new(CycleSequenceGenerator::from_seq_with_index(&param_conv, state)),
                     "learn" => Box::new(PfaSequenceGenerator::from_seq(&param_conv)),
                     "bounce" => Box::new(BounceSequenceGenerator::from_params(param_conv[0], param_conv[1], param_conv[2])),
                     "ramp" => Box::new(RampSequenceGenerator::from_params(param_conv[0], param_conv[1], param_conv[2])),
@@ -170,16 +169,24 @@ impl EventSequence {
                     _ => Box::new(CycleSequenceGenerator::from_seq(&param_conv)),
                 });            
         }
-                
+
+        for parsed_event in pattern_ast.1.iter() {
+            let main_event = MainEvent::from_parsed_input(parsed_event.0.to_string(), &parsed_event.1);
+            let main_event_hash = calculate_hash::<MainEvent>(&main_event);
+            main_events.insert(main_event_hash, main_event);
+            event_hashes.push(main_event_hash);
+        }
+        
         self.event_refs = main_events;
+
+        let cycle_state = self.events.get_state();
+                
         self.events = match pattern_ast.0 {
             "rnd" => Box::new(RandomSequenceGenerator::from_seq(&event_hashes)),
-            "cyc" => Box::new(CycleSequenceGenerator::from_seq(&event_hashes)),
+            "cyc" => Box::new(CycleSequenceGenerator::from_seq_with_index(&event_hashes, cycle_state)),
             "learn" => Box::new(PfaSequenceGenerator::from_seq(&event_hashes)),
             _ => Box::new(CycleSequenceGenerator::from_seq(&event_hashes))
-        };
-        
-        self.param_generators = param_row_map;                
+        };        
     }
 
     /// get the next event in the sequence
