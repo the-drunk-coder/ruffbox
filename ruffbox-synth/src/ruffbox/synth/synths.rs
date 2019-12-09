@@ -7,7 +7,6 @@ use crate::ruffbox::synth::sampler::Sampler;
 use crate::ruffbox::synth::StereoSynth;
 use crate::ruffbox::synth::SynthParameter;
 
-
 use std::sync::Arc;
 
 /// a sinusoidal synth with envelope etc.
@@ -188,18 +187,24 @@ impl StereoSynth for LFSquareSynth {
     }
 }
 
-/// a sinusoidal synth with envelope etc.
+/// a sampler with envelope etc.
 pub struct StereoSampler {
     sampler: Sampler,
+    envelope: ASREnvelope,
+    filter: Lpf18,
     balance: Balance2,
     reverb: f32,
     delay: f32,
 }
 
 impl StereoSampler {
-    pub fn with_buffer_ref(buf: &Arc<Vec<f32>>) -> StereoSampler {        
+    pub fn with_buffer_ref(buf: &Arc<Vec<f32>>, sr: f32) -> StereoSampler {
+        let dur = (buf.len() as f32 / sr) - 0.0002;
+        
         StereoSampler {
-            sampler: Sampler::with_buffer_ref(buf),
+            sampler: Sampler::with_buffer_ref(buf, true),
+            envelope: ASREnvelope::new(sr, 1.0, 0.0001, dur, 0.0001),
+            filter: Lpf18::new(19500.0, 0.01, 0.01, sr),
             balance: Balance2::new(),
             reverb: 0.0,
             delay: 0.0,
@@ -210,9 +215,11 @@ impl StereoSampler {
 impl StereoSynth for StereoSampler {
     fn set_parameter(&mut self, par: SynthParameter, val: f32) {
         self.sampler.set_parameter(par, val);        
+        self.filter.set_parameter(par, val);
+        self.envelope.set_parameter(par, val);
         self.balance.set_parameter(par, val);
 
-        match par {
+        match par {            
             SynthParameter::ReverbMix => self.reverb = val,
             SynthParameter::DelayMix => self.delay = val,
             _ => (),
@@ -220,15 +227,17 @@ impl StereoSynth for StereoSampler {
     }
 
     fn finish(&mut self) {
-        self.sampler.finish();
+        self.envelope.finish();
     }
 
     fn is_finished(&self) -> bool {
-        self.sampler.is_finished()
+        self.envelope.is_finished()   
     }
 
     fn get_next_block(&mut self, start_sample: usize) -> [[f32; 128]; 2] {
-        let out: [f32; 128] = self.sampler.get_next_block(start_sample);
+        let mut out: [f32; 128] = self.sampler.get_next_block(start_sample);
+        out = self.filter.process_block(out, start_sample);
+        out = self.envelope.process_block(out, start_sample);
         self.balance.process_block(out)
     }
 

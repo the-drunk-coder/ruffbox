@@ -128,6 +128,7 @@ impl Ruffbox {
             } else if new_event.timestamp < self.now { // late events 
                 self.running_instances.push(new_event.source);
                 // how to send out a late message ??
+                // some lock-free message queue to a printer thread or something .... 
                 // println!("late");
             } else {
                 self.pending_events.push(new_event);
@@ -195,7 +196,7 @@ impl Ruffbox {
         let scheduled_event = match src_type {
             SourceType::SineOsc => ScheduledEvent::new(timestamp, Box::new(SineSynth::new(44100.0))),
             SourceType::SineSynth => ScheduledEvent::new(timestamp, Box::new(SineSynth::new(44100.0))),
-            SourceType::Sampler => ScheduledEvent::new(timestamp, Box::new(StereoSampler::with_buffer_ref(&self.buffers[sample_buf]))),
+            SourceType::Sampler => ScheduledEvent::new(timestamp, Box::new(StereoSampler::with_buffer_ref(&self.buffers[sample_buf], 44100.0))),
             SourceType::LFSawSynth => ScheduledEvent::new(timestamp, Box::new(LFSawSynth::new(44100.0))),
             SourceType::LFSquareSynth => ScheduledEvent::new(timestamp, Box::new(LFSquareSynth::new(44100.0))),
         };

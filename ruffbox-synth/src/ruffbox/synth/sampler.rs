@@ -17,10 +17,11 @@ pub struct Sampler {
     frac_index_increment: f32,
     state: SynthState,
     level: f32,
+    repeat: bool,
 }
 
 impl Sampler {    
-    pub fn with_buffer_ref(buf: &Arc<Vec<f32>>) -> Sampler {        
+    pub fn with_buffer_ref(buf: &Arc<Vec<f32>>, repeat: bool) -> Sampler {        
         Sampler {
             index: 1, // start with one to account for interpolation
             frac_index: 1.0,
@@ -30,6 +31,7 @@ impl Sampler {
             frac_index_increment: 1.0,
             state: SynthState::Fresh,
             level: 1.0,
+            repeat: repeat,
         }
     }
 
@@ -42,7 +44,12 @@ impl Sampler {
             if self.index < self.buffer_len {
                 self.index = self.index + 1;
             } else {
-                self.finish();
+                if self.repeat {
+                    self.frac_index = 1.0;
+                    self.index = 1;
+                } else {
+                    self.finish();
+                }                
             }
         }
         
@@ -74,7 +81,12 @@ impl Sampler {
             if ((self.frac_index + self.frac_index_increment) as usize) < self.buffer_len {                
                 self.frac_index = self.frac_index + self.frac_index_increment;
             } else {
-                self.finish();
+                if self.repeat {
+                    self.frac_index = 1.0;
+                    self.index = 1;
+                } else {
+                    self.finish();
+                }               
             }
         }
         
@@ -85,16 +97,21 @@ impl Sampler {
 impl Source for Sampler {
 
     fn set_parameter(&mut self, par: SynthParameter, value: f32) {
-       match par {
-           SynthParameter::PlaybackRate => {
-               self.playback_rate = value;
-               self.frac_index_increment = 1.0 * value;
-           },
-           SynthParameter::Level => {
-               self.level = value;
-           },
+        match par {
+            SynthParameter::PlaybackStart => {
+                let offset = (self.buffer_len as f32 * value) as usize;
+                self.index = offset;
+                self.frac_index = offset as f32;
+            },            
+            SynthParameter::PlaybackRate => {
+                self.playback_rate = value;
+                self.frac_index_increment = 1.0 * value;
+            },
+            SynthParameter::Level => {
+                self.level = value;
+            },
            _ => (),
-        }; // tbd ...
+        };
     }
     
     fn finish(&mut self) {
