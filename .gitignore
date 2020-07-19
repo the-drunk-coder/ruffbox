@@ -1,5 +1,6 @@
 ruffbox-synth/target/*
 ruffbox-pattern/target/*
 ruffbox-pattern/pkg/*
+ruffbox-lisp**	
 *~
 *.lock

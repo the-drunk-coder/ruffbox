@@ -16,6 +16,7 @@ pub enum SynthState {
 /// a collection of common parameters
 #[allow(dead_code)]
 #[derive(Clone,Copy)]
+#[repr(C)]
 pub enum SynthParameter {
     Attack,                     // 0
     Decay,                      // 1
@@ -49,6 +50,7 @@ pub enum SynthParameter {
     Sustain,                    // 29
 }
 
+#[repr(C)]
 pub enum SourceType {
     Sampler,
     SineOsc,
