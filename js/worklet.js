@@ -32,7 +32,8 @@ class RuffboxProcessor extends AudioWorkletProcessor {
 
 	let sampleSizeForInterpolation = sampleSize + 3;
 	
-	let samplePtr = this._wasm.exports.alloc(sampleSizeForInterpolation);	
+	let samplePtr = this._wasm.exports.alloc(sampleSizeForInterpolation);
+	
 	let sampleBuf = new Float32Array (
 	    this._wasm.exports.memory.buffer,
 	    samplePtr,
@@ -81,7 +82,7 @@ class RuffboxProcessor extends AudioWorkletProcessor {
 			    }, this);
 			this._samples = [];			
 		    }
-
+		    
 		    // why always last ??
 		    this._outPtr_r = this._wasm.exports.alloc(this._size)		    
 		    this._outBuf_r = new Float32Array (
@@ -101,16 +102,30 @@ class RuffboxProcessor extends AudioWorkletProcessor {
 		let sampleSize = e.data.length;
 		let sampleData = e.data.samples;
 		let sampleId = e.data.sample_id;
-		
+		console.log(sampleId)
 		if(!this._samples){
 		    this._samples = [];
 		}
 		
 		if(this._wasm){
-		    loadSample(sampleData, sampleSize, sampleId);
+		    this.loadSample(sampleData, sampleSize, sampleId);
+		    // why always last ??
+		    this._outPtr_r = this._wasm.exports.alloc(this._size)		    
+		    this._outBuf_r = new Float32Array (
+			this._wasm.exports.memory.buffer,
+			this._outPtr_r,
+			this._size
+		    )
+		    this._outPtr_l = this._wasm.exports.alloc(this._size)		    
+		    this._outBuf_l = new Float32Array (
+			this._wasm.exports.memory.buffer,
+			this._outPtr_l,
+			this._size
+		    )
 		} else {
 		    this._samples.push([sampleData, sampleSize, sampleId]);
 		}
+		
 	    } else if (e.data.type === 'sourceType') {
 		this._sourceType = e.data.content;
 	    } else if (e.data.type === 'sourceParameter') {

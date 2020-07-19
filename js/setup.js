@@ -129,6 +129,18 @@ if (ctx.audioWorklet === undefined) {
 		.then(r => ctx.decodeAudioData(r)
 		      .then(r => n.port.postMessage({ type: 'loadSample', samples: r.getChannelData(0), length: r.length, sample_id: 'casio' })))
 
+	    // custom sample loader
+	    var customSample = document.getElementById('custom-sample');
+	    customSample.addEventListener("change", function() {		
+		var sample_id = this.files[0].name.split("\.")[0];		
+		var reader = new FileReader();
+		reader.onload = function(ev) {
+		    ctx.decodeAudioData(ev.target.result)
+			.then(r => n.port.postMessage({ type: 'loadSample', samples: r.getChannelData(0), length: r.length, sample_id: sample_id }))
+		}
+    		reader.readAsArrayBuffer(this.files[0]);
+	    }, false);
+	    
 	    //////////////////////////
 	    // LOAD EVENT SCHEDULER //
 	    //////////////////////////

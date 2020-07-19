@@ -7,7 +7,6 @@ pub mod filters;
 pub mod freeverb;
 pub mod delay;
 
-
 pub enum SynthState { 
     Fresh,
     Finished

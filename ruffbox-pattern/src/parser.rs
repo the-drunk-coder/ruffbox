@@ -5,6 +5,7 @@ use nom::{
     character::complete::{char},    
     multi::{separated_list, many1, many0},
     sequence::{separated_pair, preceded, pair, delimited},
+    character::complete::alphanumeric1,
     IResult,
 };
 
@@ -18,7 +19,7 @@ pub fn param_name(input: &str) -> IResult<&str, &str> {
          tag("dec"),         
          tag("del"),         
          tag("dur"),
-         tag("freq"),         
+         tag("freq"),
          tag("lvl"),
          tag("lp-freq"),
          tag("lp-q"),
@@ -42,7 +43,7 @@ pub fn param_list(input: &str) -> IResult<&str, Vec<(&str, f32)>> {
 
 // for custom sample events, this would need to be replaced by a freeform string function ... 
 pub fn event_name(input: &str) -> IResult<&str, &str> {
-    alt((tag("sine"), tag("sqr"), tag("saw"), tag("casio"), tag("sqr"), tag("hh"), tag("bd"), tag("sn"), tag("~")))(input)
+    alt((tag("~"), alphanumeric1, tag("_")))(input)
 }
 
 // sine;freq=100.0;dur=200
