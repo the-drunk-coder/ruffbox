@@ -325,7 +325,12 @@ impl Scheduler {
 	    // overwrite with variable if there is one ...
 	    if self.event_variables.contains_key(&next_event) {
 		// first get params, then overwrite key
-		next_params = self.event_variables[&next_event].get_raw_params();
+		let var_params = self.event_variables[&next_event].get_raw_params();
+		for (k,v) in var_params {
+		    if !next_params.contains_key(&k) {
+			next_params.insert(k, v);
+		    }
+		}
 		next_event = self.event_variables[&next_event].name.clone();		
 	    }
             
