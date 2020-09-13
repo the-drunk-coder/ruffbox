@@ -101,7 +101,6 @@ impl <T: Eq + Copy + Hash + Ord> PfaSequenceGenerator<T> {
     }
 }
 
-// fixed to second order, for now 
 impl <T: Eq + Copy + Hash + Ord> SequenceGenerator<T, usize> for PfaSequenceGenerator<T> {    
     fn get_next(&mut self) -> Option<T> {
         self.pfa.next_symbol()
@@ -134,7 +133,6 @@ impl RampSequenceGenerator {
     }
 }
 
-// fixed to second order, for now
 impl SequenceGenerator<N32, usize> for RampSequenceGenerator {    
     fn get_next(&mut self) -> Option<N32> {
         let cur = self.min + self.step_count * self.inc;
@@ -156,7 +154,6 @@ impl SequenceGenerator<N32, usize> for RampSequenceGenerator {
 ////////////
 
 // sinusoidal bounce
-
 pub struct BounceSequenceGenerator {
     min: N32,
     degree_inc: N32,
@@ -179,7 +176,6 @@ impl BounceSequenceGenerator {
     }
 }
 
-// fixed to second order, for now
 impl SequenceGenerator<N32, usize> for BounceSequenceGenerator {    
     fn get_next(&mut self) -> Option<N32> {
         // why doesn't rust has a hashable float ?????
