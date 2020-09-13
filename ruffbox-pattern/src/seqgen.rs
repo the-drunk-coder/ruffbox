@@ -1,6 +1,6 @@
 use rand::seq::SliceRandom;
 use std::hash::Hash;
-use vom_rs::safe_pfa::Pfa;
+use vom_rs::pfa::Pfa;
 
 use decorum::N32;
 
@@ -17,7 +17,7 @@ pub struct RandomSequenceGenerator<T> {
     items: Vec<T>
 }
 
-impl <T: Copy> RandomSequenceGenerator<T> {
+impl <T: Copy + Ord> RandomSequenceGenerator<T> {
     pub fn from_seq(seq: &Vec<T>) -> Self {
         RandomSequenceGenerator {
             items: seq.to_vec(),
@@ -89,11 +89,11 @@ impl <T: Copy> SequenceGenerator<T, usize> for CycleSequenceGenerator<T> {
 // PFA //
 /////////
 
-pub struct PfaSequenceGenerator<T: Eq + Copy + Hash> {
+pub struct PfaSequenceGenerator<T: Eq + Copy + Hash + Ord> {
     pfa: Pfa<T>,
 }
 
-impl <T: Eq + Copy + Hash> PfaSequenceGenerator<T> {
+impl <T: Eq + Copy + Hash + Ord> PfaSequenceGenerator<T> {
     pub fn from_seq(seq: &Vec<T>) -> Self {        
         PfaSequenceGenerator {            
             pfa: Pfa::learn(&seq, 3, 0.01, 30),
@@ -102,7 +102,7 @@ impl <T: Eq + Copy + Hash> PfaSequenceGenerator<T> {
 }
 
 // fixed to second order, for now 
-impl <T: Eq + Copy + Hash> SequenceGenerator<T, usize> for PfaSequenceGenerator<T> {    
+impl <T: Eq + Copy + Hash + Ord> SequenceGenerator<T, usize> for PfaSequenceGenerator<T> {    
     fn get_next(&mut self) -> Option<T> {
         self.pfa.next_symbol()
     }
@@ -237,7 +237,7 @@ mod tests {
                           (200.0).into(), (200.0).into(), (10.0).into(), (10.0).into(), (200.0).into(), (10.0).into(),
                           (200.0).into(), (20.0).into(), (10.0).into(), (20.0).into(), (20.0).into(), (10.0).into()];
         let mut pfa_gen = PfaSequenceGenerator::from_seq(&in_vec);
-        let mut results:Vec<N32> = Vec::new();
+        let results:Vec<N32> = Vec::new();
         for _ in 0..10 {
             println!("Result: {:?}", pfa_gen.get_next());
             
