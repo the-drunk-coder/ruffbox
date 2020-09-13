@@ -58,6 +58,16 @@ impl MainEvent {
             params: param_map,
         }
     }
+
+    fn get_raw_params(&self) -> HashMap<String, f32> {
+	let mut map = HashMap::new();
+
+	for (k,v) in self.params.iter() {
+	    map.insert(k.clone(), v.into_inner());
+	}
+	
+	map
+    }
 }
 
 impl PartialEq for MainEvent {    
@@ -232,6 +242,7 @@ pub struct Scheduler {
     running: bool,
     tempo: f64, // currently just the duration of a 16th note ...
     event_sequences: Vec<EventSequence>,
+    event_variables: HashMap<String, MainEvent>
 }
 
 #[wasm_bindgen]
@@ -247,6 +258,7 @@ impl Scheduler {
             running: false,
             tempo: 128.0,
             event_sequences: Vec::new(),
+	    event_variables: HashMap::new(),
         }
     }
 
@@ -260,18 +272,31 @@ impl Scheduler {
                     let trimmed_line = line.trim();
                     
                     if !trimmed_line.is_empty() && !trimmed_line.starts_with("#") {
-                        match parser::pattern_line(trimmed_line) {
-                            Ok(ast) => {
-                                if self.event_sequences.len() > seq_idx {
-                                    self.event_sequences[seq_idx].update_sequence(ast.1);
-                                } else {
-                                    self.event_sequences.push(EventSequence::from_parsed_line_ast(ast.1));
-                                }
+			// only these two for now ... could probably be solved more elegantly in the
+			// parser itself ...
+			match parser::variable_definiton(trimmed_line) {
+                            Ok(var_ast) => {
+                                let res = var_ast.1;
+				let var_def = res.0;
+				let ev_def = res.1;
+				let name = var_def.1;
+				let event = MainEvent::from_parsed_input(ev_def.0.to_string(), &ev_def.1);
+				self.event_variables.insert(name.to_string(),event);
                             },
-                            Err(err) => log!("invalid line! {:?}, {}", err, trimmed_line) // ??
+                            Err(_) => {				
+				match parser::pattern_line(trimmed_line) {
+				    Ok(pat_ast) => {
+					if self.event_sequences.len() > seq_idx {
+					    self.event_sequences[seq_idx].update_sequence(pat_ast.1);
+					} else {
+					    self.event_sequences.push(EventSequence::from_parsed_line_ast(pat_ast.1));
+					}
+				    },
+				    Err(pat_err) => log!("invalid line! {:?}, {}", pat_err, trimmed_line) // ??
+				};
+				seq_idx += 1;
+			    }
                         };
-                        
-                        seq_idx += 1;                        
                     }
                 }
 
@@ -295,7 +320,14 @@ impl Scheduler {
         
         for seq in self.event_sequences.iter_mut() {
             
-            let (next_event, next_params) = seq.get_next_event();
+            let (mut next_event, mut next_params) = seq.get_next_event();
+
+	    // overwrite with variable if there is one ...
+	    if self.event_variables.contains_key(&next_event) {
+		// first get params, then overwrite key
+		next_params = self.event_variables[&next_event].get_raw_params();
+		next_event = self.event_variables[&next_event].name.clone();		
+	    }
             
             let next_source_type = match next_event.as_str() {
                 "sine" => "SineSynth",

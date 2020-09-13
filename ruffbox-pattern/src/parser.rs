@@ -66,6 +66,11 @@ pub fn event_pattern(input: &str) -> IResult<&str, Vec<(&str, Vec<(&str, f32)>)>
     separated_list(many1(char(' ')), event)(input)
 }
 
+// VARIABLES
+pub fn variable_definiton(input: &str) -> IResult<&str, ((&str, &str), (&str, std::vec::Vec<(&str, f32)>))> {
+    separated_pair(separated_pair(tag("let"), char(' '), alphanumeric1), char('='), alt((event_with_param, event_without_param)))(input)
+}
+
 // SEQ GENS
 pub fn pattern_func_name(input: &str) -> IResult<&str, &str> {
     alt((tag("rnd"), tag("cyc"), tag("learn")))(input)
@@ -135,6 +140,20 @@ mod tests {
     #[test]
     fn test_param_func_header() {
         let res = param_func_header("@rate");
+        println!("Result: {:?}", res);
+        assert!(!res.is_err());
+    }
+
+    #[test]
+    fn test_var_def_with_param() {
+        let res = variable_definiton("let xs=sine;lvl=0.0");
+        println!("Result: {:?}", res);
+        assert!(!res.is_err());
+    }
+
+    #[test]
+    fn test_var_def_without_param() {
+        let res = variable_definiton("let xs=sine");
         println!("Result: {:?}", res);
         assert!(!res.is_err());
     }
