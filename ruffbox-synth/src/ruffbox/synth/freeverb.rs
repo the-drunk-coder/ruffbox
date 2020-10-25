@@ -143,7 +143,7 @@ impl Comb {
  *
  * The freeze mode feature has been left out as well.
  */
-pub struct StereoFreeverb {
+pub struct StereoFreeverb<const BUFSIZE:usize> {
     comb_l: Vec<Comb>,
     comb_r: Vec<Comb>,
     allpass_l: Vec<Allpass>,
@@ -157,7 +157,7 @@ pub struct StereoFreeverb {
     width: f32,
 }
 
-impl StereoFreeverb {
+impl <const BUFSIZE:usize> StereoFreeverb<BUFSIZE> {
     pub fn new() -> Self {
         let mut comb_l = Vec::new();
         let mut comb_r = Vec::new();
@@ -259,10 +259,10 @@ impl StereoFreeverb {
      * Main processing routine.
      * Takes a mono block, as this would be downmixed anyway.
      */
-    pub fn process(&mut self, block: [f32; 128]) -> [[f32; 128]; 2] {
-        let mut out_buf = [[0.0; 128]; 2];
+    pub fn process(&mut self, block: [f32; BUFSIZE]) -> [[f32; BUFSIZE]; 2] {
+        let mut out_buf = [[0.0; BUFSIZE]; 2];
         
-        for i in 0..128 {
+        for i in 0..BUFSIZE {
             let mut out_l = 0.0;
             let mut out_r = 0.0;
 

@@ -4,7 +4,7 @@ use crate::ruffbox::synth::SynthState;
 
 
 /// simple attack-sustain-release envelope
-pub struct ASREnvelope {
+pub struct ASREnvelope <const BUFSIZE:usize> {
     samplerate: f32,
     atk: f32,
     sus: f32,
@@ -20,7 +20,7 @@ pub struct ASREnvelope {
     state: SynthState,
 }
 
-impl ASREnvelope {
+impl <const BUFSIZE:usize> ASREnvelope <BUFSIZE> {
     pub fn new(samplerate: f32, lvl: f32, atk: f32, sus: f32, rel: f32) -> Self {
         let atk_samples = (samplerate * atk).round();
         let sus_samples = atk_samples + (samplerate * sus).round();
@@ -46,7 +46,7 @@ impl ASREnvelope {
     }    
 }
 
-impl Effect for ASREnvelope {
+impl <const BUFSIZE:usize> Effect<BUFSIZE> for ASREnvelope<BUFSIZE> {
     fn finish(&mut self) {
         self.state = SynthState::Finished;
     }
@@ -111,10 +111,10 @@ impl Effect for ASREnvelope {
         }
     }
     
-    fn process_block(&mut self, block: [f32; 128], start_sample: usize) -> [f32; 128] {        
-        let mut out: [f32; 128] = [0.0; 128];
+    fn process_block(&mut self, block: [f32; BUFSIZE], start_sample: usize) -> [f32; BUFSIZE] {        
+        let mut out: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
-        for i in start_sample..128 {
+        for i in start_sample..BUFSIZE {
             out[i] = block[i] * self.lvl;
 
             self.sample_count += 1;
@@ -145,7 +145,7 @@ mod tests {
         let test_block: [f32; 128] = [1.0; 128];
 
         // half a block attack, one block sustain, half a block release ... 2 blocks total .        
-        let mut env = ASREnvelope::new(44100.0, 0.5, 0.0014512, 0.0029024, 0.0014512);
+        let mut env = ASREnvelope::<128>::new(44100.0, 0.5, 0.0014512, 0.0029024, 0.0014512);
 
         let out_1: [f32; 128] = env.process_block(test_block, 0);
         let out_2: [f32; 128] = env.process_block(test_block, 0);
@@ -193,7 +193,7 @@ mod tests {
         let test_block: [f32; 128] = [1.0; 128];
         
         // half a block attack, one block sustain, half a block release ... 2 blocks total .
-        let mut env = ASREnvelope::new(44100.0, 0.0, 0.0, 0.0, 0.0);
+        let mut env = ASREnvelope::<128>::new(44100.0, 0.0, 0.0, 0.0, 0.0);
 
         // use paramter setter to set parameters ...        
         env.set_parameter(SynthParameter::Attack, 0.0014512);

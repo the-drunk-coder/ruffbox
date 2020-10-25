@@ -10,15 +10,15 @@ use crate::ruffbox::synth::SynthParameter;
 use std::sync::Arc;
 
 /// a sinusoidal synth with envelope etc.
-pub struct SineSynth {
-    oscillator: SineOsc,
-    envelope: ASREnvelope,
-    balance: Balance2,
+pub struct SineSynth<const BUFSIZE:usize> {
+    oscillator: SineOsc<BUFSIZE>,
+    envelope: ASREnvelope<BUFSIZE>,
+    balance: Balance2<BUFSIZE>,
     reverb: f32,
     delay: f32,
 }
 
-impl SineSynth {
+impl <const BUFSIZE:usize> SineSynth<BUFSIZE> {
     pub fn new(sr: f32) -> Self {
         SineSynth {
             oscillator: SineOsc::new(440.0, 0.5, sr),
@@ -30,7 +30,7 @@ impl SineSynth {
     }
 }
 
-impl StereoSynth for SineSynth {
+impl <const BUFSIZE:usize> StereoSynth<BUFSIZE> for SineSynth<BUFSIZE> {
     fn set_parameter(&mut self, par: SynthParameter, val: f32) {
         self.oscillator.set_parameter(par, val);
         self.envelope.set_parameter(par, val);
@@ -50,8 +50,8 @@ impl StereoSynth for SineSynth {
         self.envelope.is_finished()
     }
 
-    fn get_next_block(&mut self, start_sample: usize) -> [[f32; 128]; 2] {
-        let mut out: [f32; 128] = self.oscillator.get_next_block(start_sample);
+    fn get_next_block(&mut self, start_sample: usize) -> [[f32; BUFSIZE]; 2] {
+        let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample);
         out = self.envelope.process_block(out, start_sample);
         self.balance.process_block(out)
     }
@@ -66,16 +66,16 @@ impl StereoSynth for SineSynth {
 }
 
 /// a low-frequency sawtooth synth with envelope and lpf18 filter
-pub struct LFSawSynth {
-    oscillator: LFSaw,
-    filter: Lpf18,
-    envelope: ASREnvelope,
-    balance: Balance2,
+pub struct LFSawSynth<const BUFSIZE:usize> {
+    oscillator: LFSaw<BUFSIZE>,
+    filter: Lpf18<BUFSIZE>,
+    envelope: ASREnvelope<BUFSIZE>,
+    balance: Balance2<BUFSIZE>,
     reverb: f32,
     delay: f32,
 }
 
-impl LFSawSynth {
+impl <const BUFSIZE:usize> LFSawSynth<BUFSIZE> {
     pub fn new(sr: f32) -> Self {
         LFSawSynth {
             oscillator: LFSaw::new(100.0, 0.8, sr),
@@ -88,7 +88,7 @@ impl LFSawSynth {
     }
 }
 
-impl StereoSynth for LFSawSynth {
+impl <const BUFSIZE:usize> StereoSynth<BUFSIZE> for LFSawSynth<BUFSIZE> {
     fn set_parameter(&mut self, par: SynthParameter, val: f32) {
         self.oscillator.set_parameter(par, val);
         self.filter.set_parameter(par, val);
@@ -110,8 +110,8 @@ impl StereoSynth for LFSawSynth {
         self.envelope.is_finished()
     }
 
-    fn get_next_block(&mut self, start_sample: usize) -> [[f32; 128]; 2] {
-        let mut out: [f32; 128] = self.oscillator.get_next_block(start_sample);
+    fn get_next_block(&mut self, start_sample: usize) -> [[f32; BUFSIZE]; 2] {
+        let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample);
         out = self.filter.process_block(out, start_sample);
         out = self.envelope.process_block(out, start_sample);
         self.balance.process_block(out)
@@ -127,16 +127,16 @@ impl StereoSynth for LFSawSynth {
 }
 
 /// a low-frequency (non-bandlimited) squarewave synth with envelope and lpf18 filter
-pub struct LFSquareSynth {
-    oscillator: LFSquare,
-    filter: Lpf18,
-    envelope: ASREnvelope,
-    balance: Balance2,
+pub struct LFSquareSynth<const BUFSIZE:usize> {
+    oscillator: LFSquare<BUFSIZE>,
+    filter: Lpf18<BUFSIZE>,
+    envelope: ASREnvelope<BUFSIZE>,
+    balance: Balance2<BUFSIZE>,
     reverb: f32,
     delay: f32,
 }
 
-impl LFSquareSynth {
+impl <const BUFSIZE:usize> LFSquareSynth<BUFSIZE> {
     pub fn new(sr: f32) -> Self {
         LFSquareSynth {
             oscillator: LFSquare::new(100.0, 0.4, 0.8, sr),
@@ -149,7 +149,7 @@ impl LFSquareSynth {
     }
 }
 
-impl StereoSynth for LFSquareSynth {
+impl <const BUFSIZE:usize> StereoSynth<BUFSIZE> for LFSquareSynth<BUFSIZE> {
     fn set_parameter(&mut self, par: SynthParameter, val: f32) {
         self.oscillator.set_parameter(par, val);
         self.filter.set_parameter(par, val);
@@ -171,8 +171,8 @@ impl StereoSynth for LFSquareSynth {
         self.envelope.is_finished()
     }
 
-    fn get_next_block(&mut self, start_sample: usize) -> [[f32; 128]; 2] {
-        let mut out: [f32; 128] = self.oscillator.get_next_block(start_sample);
+    fn get_next_block(&mut self, start_sample: usize) -> [[f32; BUFSIZE]; 2] {
+        let mut out: [f32; BUFSIZE] = self.oscillator.get_next_block(start_sample);
         out = self.filter.process_block(out, start_sample);
         out = self.envelope.process_block(out, start_sample);
         self.balance.process_block(out)
@@ -188,17 +188,17 @@ impl StereoSynth for LFSquareSynth {
 }
 
 /// a sampler with envelope etc.
-pub struct StereoSampler {
-    sampler: Sampler,
-    envelope: ASREnvelope,
-    filter: Lpf18,
-    balance: Balance2,
+pub struct StereoSampler<const BUFSIZE:usize> {
+    sampler: Sampler<BUFSIZE>,
+    envelope: ASREnvelope<BUFSIZE>,
+    filter: Lpf18<BUFSIZE>,
+    balance: Balance2<BUFSIZE>,
     reverb: f32,
     delay: f32,
 }
 
-impl StereoSampler {
-    pub fn with_buffer_ref(buf: &Arc<Vec<f32>>, sr: f32) -> StereoSampler {
+impl <const BUFSIZE:usize> StereoSampler<BUFSIZE> {
+    pub fn with_buffer_ref(buf: &Arc<Vec<f32>>, sr: f32) -> StereoSampler<BUFSIZE> {
         let dur = (buf.len() as f32 / sr) - 0.0002;
         
         StereoSampler {
@@ -212,7 +212,7 @@ impl StereoSampler {
     }
 }
 
-impl StereoSynth for StereoSampler {
+impl <const BUFSIZE:usize> StereoSynth<BUFSIZE> for StereoSampler<BUFSIZE> {
     fn set_parameter(&mut self, par: SynthParameter, val: f32) {
         self.sampler.set_parameter(par, val);        
         self.filter.set_parameter(par, val);
@@ -234,8 +234,8 @@ impl StereoSynth for StereoSampler {
         self.envelope.is_finished()   
     }
 
-    fn get_next_block(&mut self, start_sample: usize) -> [[f32; 128]; 2] {
-        let mut out: [f32; 128] = self.sampler.get_next_block(start_sample);
+    fn get_next_block(&mut self, start_sample: usize) -> [[f32; BUFSIZE]; 2] {
+        let mut out: [f32; BUFSIZE] = self.sampler.get_next_block(start_sample);
         out = self.filter.process_block(out, start_sample);
         out = self.envelope.process_block(out, start_sample);
         self.balance.process_block(out)

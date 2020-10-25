@@ -20,12 +20,12 @@ use crate::ruffbox::synth::synths::*;
 /// timed event, to be created in the trigger method, then 
 /// sent to the event queue to be either dispatched directly
 /// or pushed to the pending queue ...
-struct ScheduledEvent {
+struct ScheduledEvent<const BUFSIZE:usize> {
     timestamp: f64,
-    source: Box<dyn StereoSynth + Send>,
+    source: Box<dyn StereoSynth<BUFSIZE> + Send>,
 }
 
-impl Ord for ScheduledEvent {
+impl <const BUFSIZE:usize> Ord for ScheduledEvent <BUFSIZE> {
     /// ScheduledEvent implements Ord so the pending events queue
     /// can be ordered by the timestamps ...
     fn cmp(&self, other: &Self) -> Ordering {
@@ -33,7 +33,7 @@ impl Ord for ScheduledEvent {
     }
 }
 
-impl PartialOrd for ScheduledEvent {
+impl <const BUFSIZE:usize> PartialOrd for ScheduledEvent <BUFSIZE> {
     /// ScheduledEvent implements PartialOrd so the pending events queue
     /// can be ordered by the timestamps ...
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
@@ -41,7 +41,7 @@ impl PartialOrd for ScheduledEvent {
     }
 }
 
-impl PartialEq for ScheduledEvent {
+impl <const BUFSIZE:usize> PartialEq for ScheduledEvent <BUFSIZE> {
     /// ScheduledEvent implements PartialEq so the pending events queue
     /// can be ordered by the timestamps ...
     fn eq(&self, other: &Self) -> bool {
@@ -49,11 +49,11 @@ impl PartialEq for ScheduledEvent {
     }
 }
 
-impl Eq for ScheduledEvent {}
+impl <const BUFSIZE:usize> Eq for ScheduledEvent <BUFSIZE> {}
 
 // constructor implementation
-impl ScheduledEvent {
-    pub fn new(ts: f64, src: Box<dyn StereoSynth + Send>) -> Self {
+impl <const BUFSIZE:usize> ScheduledEvent <BUFSIZE> {
+    pub fn new(ts: f64, src: Box<dyn StereoSynth<BUFSIZE> + Send>) -> Self {
         ScheduledEvent {
             timestamp: ts,
             source: src,
@@ -66,31 +66,31 @@ impl ScheduledEvent {
 }
 
 /// the main synth instance
-pub struct Ruffbox {
-    running_instances: Vec<Box<dyn StereoSynth + Send>>,
-    pending_events: Vec<ScheduledEvent>,
+pub struct Ruffbox<const BUFSIZE:usize> {
+    running_instances: Vec<Box<dyn StereoSynth<BUFSIZE> + Send>>,
+    pending_events: Vec<ScheduledEvent<BUFSIZE>>,
     buffers: Vec<Arc<Vec<f32>>>,
-    prepared_instance_map: HashMap<usize, ScheduledEvent>,
+    prepared_instance_map: HashMap<usize, ScheduledEvent<BUFSIZE>>,
     instance_counter: AtomicCell<usize>,
-    new_instances_q_send: crossbeam::channel::Sender<ScheduledEvent>,
-    new_instances_q_rec: crossbeam::channel::Receiver<ScheduledEvent>,
+    new_instances_q_send: crossbeam::channel::Sender<ScheduledEvent<BUFSIZE>>,
+    new_instances_q_rec: crossbeam::channel::Receiver<ScheduledEvent<BUFSIZE>>,
     block_duration: f64,
     sec_per_sample: f64,
     now: f64,
-    master_reverb: StereoFreeverb,
-    master_delay: StereoDelay,
+    master_reverb: StereoFreeverb<BUFSIZE>,
+    master_delay: StereoDelay<BUFSIZE>,
 }
 
-impl Ruffbox {
-    pub fn new() -> Ruffbox {
-        let (tx, rx): (Sender<ScheduledEvent>, Receiver<ScheduledEvent>) = crossbeam::channel::bounded(1000);
+impl <const BUFSIZE: usize> Ruffbox<BUFSIZE> {
+    pub fn new() -> Ruffbox<BUFSIZE> {
+        let (tx, rx): (Sender<ScheduledEvent<BUFSIZE>>, Receiver<ScheduledEvent<BUFSIZE>>) = crossbeam::channel::bounded(1000);
 
         // tweak some reverb values ... 
         let mut rev = StereoFreeverb::new();
         rev.set_roomsize(0.65);
         rev.set_damp(0.43);
         rev.set_wet(1.0);
-
+	
         let del = StereoDelay::with_max_capacity_sec(2.0, 44100.0);
         
         Ruffbox {            
@@ -102,7 +102,7 @@ impl Ruffbox {
             new_instances_q_send: tx,
             new_instances_q_rec: rx,
             // timing stuff
-            block_duration: 128.0 / 44100.0,
+            block_duration: BUFSIZE as f64 / 44100.0,
             sec_per_sample: 1.0 / 44100.0,
             now: 0.0,
             master_reverb: rev,
@@ -110,11 +110,11 @@ impl Ruffbox {
         }
     }
            
-    pub fn process(&mut self, stream_time: f64) -> [[f32; 128]; 2] {        
-        let mut out_buf: [[f32; 128]; 2] = [[0.0; 128]; 2];
+    pub fn process(&mut self, stream_time: f64) -> [[f32; BUFSIZE]; 2] {        
+        let mut out_buf: [[f32; BUFSIZE]; 2] = [[0.0; BUFSIZE]; 2];
 
-        let mut master_delay_in: [[f32; 128]; 2] = [[0.0; 128]; 2];        
-        let mut master_reverb_in: [f32; 128] = [0.0; 128];
+        let mut master_delay_in: [[f32; BUFSIZE]; 2] = [[0.0; BUFSIZE]; 2];        
+        let mut master_reverb_in: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
         self.now = stream_time;
         
@@ -138,7 +138,7 @@ impl Ruffbox {
         // handle already running instances
         for running_inst in self.running_instances.iter_mut() {
             let block = running_inst.get_next_block(0);
-            for s in 0..128 {
+            for s in 0..BUFSIZE {
                 out_buf[0][s] += block[0][s];
                 out_buf[1][s] += block[1][s];
 
@@ -162,7 +162,7 @@ impl Ruffbox {
 
             let block = current_event.source.get_next_block(sample_offset.round() as usize);
 
-            for s in 0..128 {
+            for s in 0..BUFSIZE {
                 out_buf[0][s] += block[0][s];
                 out_buf[1][s] += block[1][s];
                 
@@ -181,7 +181,7 @@ impl Ruffbox {
         let reverb_out = self.master_reverb.process(master_reverb_in);
         let delay_out = self.master_delay.process(master_delay_in);
         
-        for s in 0..128 {
+        for s in 0..BUFSIZE {
             out_buf[0][s] += reverb_out[0][s] + delay_out[0][s];
             out_buf[1][s] += reverb_out[1][s] + delay_out[1][s];
         }
@@ -252,13 +252,13 @@ mod tests {
         ruff.trigger(inst);
         
         let out_1 = ruff.process(0.0);
-        let mut comp_1 = [0.0; 128];
+        let mut comp_1 = [0.0; BUFSIZE];
 
-        for i in 0..128 {
+        for i in 0..BUFSIZE {
             comp_1[i] = (2.0 * PI * 440.0 * (i as f32 * (1.0 / 44100.0))).sin()
         }
         
-        for i in 0..128 {
+        for i in 0..BUFSIZE {
             //println!("{} {} {}; ", i, out_1[0][i], comp_1[i]);
             assert_approx_eq::assert_approx_eq!(out_1[0][i], comp_1[i], 0.00001);
         }

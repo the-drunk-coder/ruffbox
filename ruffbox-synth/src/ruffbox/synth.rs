@@ -58,25 +58,25 @@ pub enum SourceType {
     LFSquareSynth,
 }
 
-pub trait Source {
+pub trait Source<const BUFSIZE:usize> {
     fn set_parameter(&mut self, par: SynthParameter, value: f32);
     fn finish(&mut self);
     fn is_finished(&self) -> bool;
-    fn get_next_block(&mut self, start_sample: usize) -> [f32; 128];
+    fn get_next_block(&mut self, start_sample: usize) -> [f32; BUFSIZE];
 }
 
-pub trait Effect {
+pub trait Effect<const BUFSIZE:usize> {
     fn finish(&mut self);
     fn is_finished(&self) -> bool;
     fn set_parameter(&mut self, par: SynthParameter, value: f32);    
-    fn process_block(&mut self, block: [f32; 128], start_sample: usize) -> [f32; 128];
+    fn process_block(&mut self, block: [f32; BUFSIZE], start_sample: usize) -> [f32; BUFSIZE];
 }
 
-pub trait StereoSynth {
+pub trait StereoSynth<const BUFSIZE:usize> {
     fn set_parameter(&mut self, par: SynthParameter, value: f32);
     fn finish(&mut self);
     fn is_finished(&self) -> bool;
-    fn get_next_block(&mut self, start_sample: usize) -> [[f32; 128]; 2];
+    fn get_next_block(&mut self, start_sample: usize) -> [[f32; BUFSIZE]; 2];
     fn reverb_level(&self) -> f32;
     fn delay_level(&self) -> f32;
 }

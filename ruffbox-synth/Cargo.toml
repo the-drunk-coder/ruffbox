@@ -1,12 +1,12 @@
 [package]
-name = "ruffbox-synth"
+name = "ruffbox_synth"
 version = "1.1.1"
 authors = ["nik <nik@parkellipsen.de>"]
 edition = "2018"
 license = "MIT"
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["rlib", "cdylib"]
 
 [dependencies]
 num = "0.3.0"

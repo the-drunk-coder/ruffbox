@@ -1,3 +1,5 @@
+#![feature(const_generics)]
+
 #[macro_use]
 extern crate lazy_static;
 
@@ -13,10 +15,10 @@ pub extern "C" fn alloc(size: usize) -> *mut f32 {
     Box::into_raw(vec.into_boxed_slice()) as *mut f32
 }
 
-mod ruffbox;
+pub mod ruffbox;
 
 lazy_static! {
-    static ref RUFF: Mutex<ruffbox::Ruffbox> = Mutex::new(ruffbox::Ruffbox::new());
+    static ref RUFF: Mutex<ruffbox::Ruffbox<128>> = Mutex::new(ruffbox::Ruffbox::new());
 }
 
 #[no_mangle]
@@ -26,7 +28,7 @@ pub extern "C" fn process(out_ptr_l: *mut f32, out_ptr_r: *mut f32, size: usize,
     let out_buf_l: &mut [f32] = unsafe { std::slice::from_raw_parts_mut(out_ptr_l, size)};
     let out_buf_r: &mut [f32] = unsafe { std::slice::from_raw_parts_mut(out_ptr_r, size)};
 
-    // mono for now ... 
+    // no more mono for now ... 
     let out = ruff.process(stream_time);
     for i in 0..128 {
         out_buf_l[i] = out[0][i];

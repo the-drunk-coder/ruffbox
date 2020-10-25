@@ -7,7 +7,7 @@ use crate::ruffbox::synth::SynthParameter;
  *
  * My all-time favourite lowpass :D
  */
-pub struct Lpf18 {
+pub struct Lpf18<const BUFSIZE:usize> {
     // user parameters
     cutoff: f32,
     res: f32,
@@ -30,7 +30,7 @@ pub struct Lpf18 {
     samplerate: f32,
 }
 
-impl Lpf18 {
+impl <const BUFSIZE:usize> Lpf18<BUFSIZE> {
     pub fn new(freq: f32, res: f32, dist: f32, sr: f32) -> Self {
         let kfcn = 2.0 * freq * (1.0 / sr);
         let kp = ((-2.7528 * kfcn + 3.0429) * kfcn + 1.718) * kfcn - 0.9984;
@@ -73,7 +73,7 @@ impl Lpf18 {
     }
 }
 
-impl Effect for Lpf18 {
+impl <const BUFSIZE:usize> Effect<BUFSIZE> for Lpf18<BUFSIZE> {
     // some parameter limits might be nice ... 
     fn set_parameter(&mut self, par: SynthParameter, value: f32) {
         match par {
@@ -95,10 +95,10 @@ impl Effect for Lpf18 {
     fn is_finished(&self) -> bool { false } // it's never finished ..
 
     // start sample isn't really needed either ... 
-    fn process_block(&mut self, block: [f32; 128], _start_sample: usize) -> [f32; 128] {
-        let mut out_buf: [f32; 128] = [0.0; 128];
+    fn process_block(&mut self, block: [f32; BUFSIZE], _start_sample: usize) -> [f32; BUFSIZE] {
+        let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
-        for i in 0..128 {
+        for i in 0..BUFSIZE {
 
             self.ax1  = self.lastin;
             self.ay11 = self.ay1;

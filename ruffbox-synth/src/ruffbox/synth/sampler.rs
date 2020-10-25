@@ -8,7 +8,7 @@ use std::sync::Arc;
 /**
  * a very simple sample player ...
  */
-pub struct Sampler {
+pub struct Sampler <const BUFSIZE:usize> {
     index: usize,
     frac_index: f32,
     buffer_ref: Arc<Vec<f32>>,
@@ -20,8 +20,8 @@ pub struct Sampler {
     repeat: bool,
 }
 
-impl Sampler {    
-    pub fn with_buffer_ref(buf: &Arc<Vec<f32>>, repeat: bool) -> Sampler {        
+impl <const BUFSIZE:usize> Sampler <BUFSIZE> {    
+    pub fn with_buffer_ref(buf: &Arc<Vec<f32>>, repeat: bool) -> Sampler<BUFSIZE> {        
         Sampler {
             index: 1, // start with one to account for interpolation
             frac_index: 1.0,
@@ -35,10 +35,10 @@ impl Sampler {
         }
     }
 
-    fn get_next_block_no_interp(&mut self, start_sample: usize) -> [f32; 128] {
-        let mut out_buf: [f32; 128] = [0.0; 128];
+    fn get_next_block_no_interp(&mut self, start_sample: usize) -> [f32; BUFSIZE] {
+        let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
-        for i in start_sample..128 {            
+        for i in start_sample..BUFSIZE {            
             out_buf[i] = self.buffer_ref[self.index] * self.level;
             
             if self.index < self.buffer_len {
@@ -56,10 +56,10 @@ impl Sampler {
         out_buf
     }
 
-    fn get_next_block_interp(&mut self, start_sample: usize) -> [f32; 128] {
-        let mut out_buf: [f32; 128] = [0.0; 128];
+    fn get_next_block_interp(&mut self, start_sample: usize) -> [f32; BUFSIZE] {
+        let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
-        for i in start_sample..128 {
+        for i in start_sample..BUFSIZE {
             // get sample:
             let idx = self.frac_index.floor();
             let frac = self.frac_index - idx;             
@@ -94,7 +94,7 @@ impl Sampler {
     }
 }
 
-impl Source for Sampler {
+impl <const BUFSIZE:usize> Source <BUFSIZE> for Sampler <BUFSIZE> {
 
     fn set_parameter(&mut self, par: SynthParameter, value: f32) {
         match par {
@@ -125,7 +125,7 @@ impl Source for Sampler {
         }
     }
     
-    fn get_next_block(&mut self, start_sample: usize) -> [f32; 128] {
+    fn get_next_block(&mut self, start_sample: usize) -> [f32; BUFSIZE] {
         if self.playback_rate == 1.0 {
             self.get_next_block_no_interp(start_sample)
         } else {

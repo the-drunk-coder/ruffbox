@@ -6,7 +6,7 @@ use std::f32::consts::PI;
 /**
  * A simple sine oscillator
  */
-pub struct SineOsc {   
+pub struct SineOsc<const BUFSIZE:usize> {   
     lvl: f32,    
     sin_time: f32,
     sin_delta_time: f32,
@@ -14,7 +14,7 @@ pub struct SineOsc {
     sample_count: u64,
 }
 
-impl SineOsc {    
+impl <const BUFSIZE:usize> SineOsc<BUFSIZE> {    
     pub fn new(freq: f32, lvl: f32, sr: f32) -> Self {
         SineOsc {
             lvl: lvl,            
@@ -26,7 +26,7 @@ impl SineOsc {
     }
 }
 
-impl Source for SineOsc {
+impl <const BUFSIZE:usize> Source<BUFSIZE> for SineOsc<BUFSIZE> {
     // some parameter limits might be nice ... 
     fn set_parameter(&mut self, par: SynthParameter, value: f32) {
         match par {
@@ -44,10 +44,10 @@ impl Source for SineOsc {
         false        
     }
 
-    fn get_next_block(&mut self, start_sample: usize) -> [f32; 128] {
-        let mut out_buf: [f32; 128] = [0.0; 128];
+    fn get_next_block(&mut self, start_sample: usize) -> [f32; BUFSIZE] {
+        let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
-        for i in start_sample..128 {
+        for i in start_sample..BUFSIZE {
             out_buf[i] = (self.pi_slice * self.sin_delta_time * self.sample_count as f32).sin() * self.lvl;
             self.sample_count += 1;
             self.sin_time += self.sin_delta_time;            
@@ -60,7 +60,7 @@ impl Source for SineOsc {
 /**
  * A non-band-limited sawtooth oscillator.
  */
-pub struct LFSaw {
+pub struct LFSaw<const BUFSIZE:usize> {
     freq: f32,
     lvl: f32,
     samplerate: f32,    
@@ -70,7 +70,7 @@ pub struct LFSaw {
     period_count: usize,
 }
 
-impl LFSaw {    
+impl <const BUFSIZE:usize> LFSaw<BUFSIZE> {    
     pub fn new(freq: f32, lvl: f32, sr: f32) -> Self {
         LFSaw {
             freq: freq,
@@ -84,7 +84,7 @@ impl LFSaw {
     }
 }
 
-impl Source for LFSaw {
+impl <const BUFSIZE:usize> Source<BUFSIZE> for LFSaw<BUFSIZE> {
 
     // some parameter limits might be nice ... 
     fn set_parameter(&mut self, par: SynthParameter, value: f32) {
@@ -108,10 +108,10 @@ impl Source for LFSaw {
         false
     }
 
-    fn get_next_block(&mut self, start_sample: usize) -> [f32; 128] {
-        let mut out_buf: [f32; 128] = [0.0; 128];
+    fn get_next_block(&mut self, start_sample: usize) -> [f32; BUFSIZE] {
+        let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
-        for i in start_sample..128 {
+        for i in start_sample..BUFSIZE {
             out_buf[i] = self.cur_lvl;
             self.period_count += 1;
             if self.period_count > self.period_samples {
@@ -129,7 +129,7 @@ impl Source for LFSaw {
 /**
  * A non-band-limited square-wave oscillator.
  */
-pub struct LFSquare {
+pub struct LFSquare<const BUFSIZE:usize> {
     freq: f32,
     lvl: f32,
     samplerate: f32,
@@ -139,7 +139,7 @@ pub struct LFSquare {
     flank_point: usize,
 }
 
-impl LFSquare {    
+impl <const BUFSIZE:usize> LFSquare<BUFSIZE> {    
     pub fn new(freq: f32, pw: f32, lvl: f32, sr: f32) -> Self {
         LFSquare {
             freq: freq,
@@ -153,7 +153,7 @@ impl LFSquare {
     }
 }
 
-impl Source for LFSquare {
+impl <const BUFSIZE:usize> Source<BUFSIZE> for LFSquare<BUFSIZE> {
 
     // some parameter limits might be nice ... 
     fn set_parameter(&mut self, par: SynthParameter, value: f32) {
@@ -180,10 +180,10 @@ impl Source for LFSquare {
         false
     }
 
-    fn get_next_block(&mut self, start_sample: usize) -> [f32; 128] {
-        let mut out_buf: [f32; 128] = [0.0; 128];
+    fn get_next_block(&mut self, start_sample: usize) -> [f32; BUFSIZE] {
+        let mut out_buf: [f32; BUFSIZE] = [0.0; BUFSIZE];
 
-        for i in start_sample..128 {
+        for i in start_sample..BUFSIZE {
             if self.period_count < self.flank_point {
                 out_buf[i] = self.lvl;
             } else {
@@ -209,7 +209,7 @@ mod tests {
 
     #[test]
     fn sine_osc_test_at_block_start() {
-        let mut osc = SineOsc::new(440.0, 1.0, 44100.0);
+        let mut osc = SineOsc::<128>::new(440.0, 1.0, 44100.0);
 
         let out_1 = osc.get_next_block(0);
         let mut comp_1 = [0.0; 128];
@@ -226,7 +226,7 @@ mod tests {
 
     #[test]
     fn sine_osc_test_start_in_block() {
-        let mut osc = SineOsc::new(440.0, 1.0, 44100.0);
+        let mut osc = SineOsc::<128>::new(440.0, 1.0, 44100.0);
 
         let start_time:f32 = 0.001;
 
@@ -248,7 +248,7 @@ mod tests {
     
     #[test]
     fn sine_osc_test_multiple_blocks() {
-        let mut osc = SineOsc::new(440.0, 1.0, 44100.0);
+        let mut osc = SineOsc::<128>::new(440.0, 1.0, 44100.0);
 
         let out_1 = osc.get_next_block(0);
         let out_2 = osc.get_next_block(0);

@@ -1,12 +1,12 @@
 use crate::ruffbox::synth::SynthParameter;
 use std::f32::consts::PI;
 
-pub struct Balance2 {
+pub struct Balance2<const BUFSIZE:usize> {
     left_level: f32,
     right_level: f32,
 }
 
-impl Balance2 {
+impl <const BUFSIZE:usize> Balance2<BUFSIZE> {
     pub fn new() -> Self {
         let bal:f32 = 0.5;
         let bal_sqrt = bal.sqrt();
@@ -31,9 +31,9 @@ impl Balance2 {
         };
     }
     /// pan mono to stereo
-    pub fn process_block(&mut self, block: [f32; 128]) -> [[f32; 128]; 2] {
-        let mut out_buf = [[0.0; 128]; 2];
-        for i in 0..128 {
+    pub fn process_block(&mut self, block: [f32; BUFSIZE]) -> [[f32; BUFSIZE]; 2] {
+        let mut out_buf = [[0.0; BUFSIZE]; 2];
+        for i in 0..BUFSIZE {
             out_buf[0][i] = block[i] * self.left_level;
             out_buf[1][i] = block[i] * self.right_level;
         }
