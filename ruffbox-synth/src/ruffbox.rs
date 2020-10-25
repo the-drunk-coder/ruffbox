@@ -239,7 +239,7 @@ mod tests {
     
     #[test]
     fn test_sine_synth_at_block_start() {
-        let mut ruff = Ruffbox::new();
+        let mut ruff = Ruffbox::<128>::new();
 
         let inst = ruff.prepare_instance(SourceType::SineSynth, 0.0, 0);
         ruff.set_instance_parameter(inst, SynthParameter::PitchFrequency, 440.0);
@@ -252,13 +252,13 @@ mod tests {
         ruff.trigger(inst);
         
         let out_1 = ruff.process(0.0);
-        let mut comp_1 = [0.0; BUFSIZE];
+        let mut comp_1 = [0.0; 128];
 
-        for i in 0..BUFSIZE {
+        for i in 0..128 {
             comp_1[i] = (2.0 * PI * 440.0 * (i as f32 * (1.0 / 44100.0))).sin()
         }
         
-        for i in 0..BUFSIZE {
+        for i in 0..128 {
             //println!("{} {} {}; ", i, out_1[0][i], comp_1[i]);
             assert_approx_eq::assert_approx_eq!(out_1[0][i], comp_1[i], 0.00001);
         }
@@ -267,7 +267,7 @@ mod tests {
     #[test]
     fn test_basic_playback() {
         
-        let mut ruff = Ruffbox::new();
+        let mut ruff = Ruffbox::<128>::new();
 
         // first point and last two points are for eventual interpolation
         let sample1 = [0.0, 0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0, 0.0, 0.0];
@@ -299,7 +299,7 @@ mod tests {
     #[test]
     fn reverb_smoke_test() {
         
-        let mut ruff = Ruffbox::new();
+        let mut ruff = Ruffbox::<128>::new();
 
         // first point and last two points are for eventual interpolation
         let sample1 = [0.0, 0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0, 0.0, 0.0];
@@ -326,7 +326,7 @@ mod tests {
 
     #[test]
     fn test_scheduled_playback() {
-        let mut ruff = Ruffbox::new();
+        let mut ruff = Ruffbox::<128>::new();
 
         // block duration in seconds
         let block_duration = 0.00290249433;
@@ -364,7 +364,7 @@ mod tests {
 
     #[test]
     fn test_overlap_playback() {
-        let mut ruff = Ruffbox::new();
+        let mut ruff = Ruffbox::<128>::new();
 
         // block duration in seconds
         let block_duration = 0.00290249433;
@@ -412,7 +412,7 @@ mod tests {
 
     #[test]
     fn test_disjunct_playback() {
-        let mut ruff = Ruffbox::new();
+        let mut ruff = Ruffbox::<128>::new();
 
         // block duration in seconds
         let block_duration = 0.00290249433;
@@ -470,7 +470,7 @@ mod tests {
     #[test]
     fn test_late_playback() {
         
-        let mut ruff = Ruffbox::new();
+        let mut ruff = Ruffbox::<128>::new();
 
         let sample1 = [0.0, 0.0, 0.1, 0.2, 0.3, 0.4, 0.3, 0.2, 0.1, 0.0, 0.0, 0.0];
                 
