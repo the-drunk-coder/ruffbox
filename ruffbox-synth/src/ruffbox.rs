@@ -281,18 +281,31 @@ mod tests {
         let inst_1 = ruff.prepare_instance(SourceType::Sampler, 0.0, bnum1);
         let inst_2 = ruff.prepare_instance(SourceType::Sampler, 0.0, bnum2);
 
-        // pan to left
+        // pan to left, neutralize
         ruff.set_instance_parameter(inst_1, SynthParameter::StereoPosition, -1.0);
-        ruff.set_instance_parameter(inst_2, SynthParameter::StereoPosition, -1.0);
-               
+	ruff.set_instance_parameter(inst_1, SynthParameter::LowpassCutoffFrequency, 22050.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::LowpassFilterDistortion, 0.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::LowpassQFactor, 0.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::Attack, 0.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::Release, 0.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::Sustain, 9.0 / 44100.0);
+	
+	ruff.set_instance_parameter(inst_2, SynthParameter::StereoPosition, -1.0);
+	ruff.set_instance_parameter(inst_2, SynthParameter::LowpassCutoffFrequency, 22050.0);
+	ruff.set_instance_parameter(inst_2, SynthParameter::LowpassFilterDistortion, 0.0);
+	ruff.set_instance_parameter(inst_2, SynthParameter::LowpassQFactor, 0.0);
+	ruff.set_instance_parameter(inst_2, SynthParameter::Attack, 0.0);
+	ruff.set_instance_parameter(inst_2, SynthParameter::Release, 0.0);
+	ruff.set_instance_parameter(inst_2, SynthParameter::Sustain, 9.0 / 44100.0);
+		               
         ruff.trigger(inst_1);
         ruff.trigger(inst_2);
 
         let out_buf = ruff.process(0.0);
         
         for i in 0..9 {
-            //println!("{} {} ", out_buf[i], sample1[i + 1] + sample2[i + 1]);
-            assert_approx_eq::assert_approx_eq!(out_buf[0][i], sample1[i + 1] + sample2[i + 1], 0.0001);
+            println!("{} {} ", out_buf[0][i], sample1[i + 1] + sample2[i + 1]);
+            assert_approx_eq::assert_approx_eq!(out_buf[0][i], sample1[i + 1] + sample2[i + 1], 0.03);
         }        
     }
 
@@ -313,14 +326,20 @@ mod tests {
         // pan to left
         ruff.set_instance_parameter(inst_1, SynthParameter::StereoPosition, -1.0);
         ruff.set_instance_parameter(inst_1, SynthParameter::ReverbMix, 1.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::LowpassCutoffFrequency, 22050.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::LowpassFilterDistortion, 0.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::LowpassQFactor, 0.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::Attack, 0.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::Release, 0.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::Sustain, 9.0 / 44100.0);
                        
         ruff.trigger(inst_1);
         
         let out_buf = ruff.process(0.0);
         
         for i in 0..9 {
-            //println!("{} {} ", out_buf[i], sample1[i + 1] + sample2[i + 1]);
-            assert_approx_eq::assert_approx_eq!(out_buf[0][i], sample1[i + 1], 0.0001);
+            println!("{} {} ", out_buf[0][i], sample1[i + 1]);
+            assert_approx_eq::assert_approx_eq!(out_buf[0][i], sample1[i + 1], 0.03);
         }        
     }
 
@@ -343,7 +362,20 @@ mod tests {
 
         // pan to left
         ruff.set_instance_parameter(inst_1, SynthParameter::StereoPosition, -1.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::LowpassCutoffFrequency, 22050.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::LowpassFilterDistortion, 0.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::LowpassQFactor, 0.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::Attack, 0.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::Release, 0.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::Sustain, 9.0 / 44100.0);
+
         ruff.set_instance_parameter(inst_2, SynthParameter::StereoPosition, -1.0);
+	ruff.set_instance_parameter(inst_2, SynthParameter::LowpassCutoffFrequency, 22050.0);
+	ruff.set_instance_parameter(inst_2, SynthParameter::LowpassFilterDistortion, 0.0);
+	ruff.set_instance_parameter(inst_2, SynthParameter::LowpassQFactor, 0.0);
+	ruff.set_instance_parameter(inst_2, SynthParameter::Attack, 0.0);
+	ruff.set_instance_parameter(inst_2, SynthParameter::Release, 0.0);
+	ruff.set_instance_parameter(inst_2, SynthParameter::Sustain, 9.0 / 44100.0);
         
         ruff.trigger(inst_1);
         ruff.trigger(inst_2);
@@ -358,7 +390,7 @@ mod tests {
         let out_buf = ruff.process(stream_time);
                        
         for i in 0..9 {
-            assert_approx_eq::assert_approx_eq!(out_buf[0][33 + i], sample1[i + 1] + sample2[i + 1], 0.0001);
+            assert_approx_eq::assert_approx_eq!(out_buf[0][33 + i], sample1[i + 1] + sample2[i + 1], 0.03);
         }        
     }
 
@@ -381,7 +413,20 @@ mod tests {
 
         // pan to left
         ruff.set_instance_parameter(inst_1, SynthParameter::StereoPosition, -1.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::LowpassCutoffFrequency, 22050.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::LowpassFilterDistortion, 0.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::LowpassQFactor, 0.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::Attack, 0.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::Release, 0.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::Sustain, 9.0 / 44100.0);
+
         ruff.set_instance_parameter(inst_2, SynthParameter::StereoPosition, -1.0);
+	ruff.set_instance_parameter(inst_2, SynthParameter::LowpassCutoffFrequency, 22050.0);
+	ruff.set_instance_parameter(inst_2, SynthParameter::LowpassFilterDistortion, 0.0);
+	ruff.set_instance_parameter(inst_2, SynthParameter::LowpassQFactor, 0.0);
+	ruff.set_instance_parameter(inst_2, SynthParameter::Attack, 0.0);
+	ruff.set_instance_parameter(inst_2, SynthParameter::Release, 0.0);
+	ruff.set_instance_parameter(inst_2, SynthParameter::Sustain, 9.0 / 44100.0);
         
         ruff.trigger(inst_1);
         ruff.trigger(inst_2);
@@ -398,15 +443,15 @@ mod tests {
 
         // offsets to account for interpolation
         for i in 0..4 {
-            assert_approx_eq::assert_approx_eq!(out_buf[0][33 + i], sample1[i + 1], 0.0001);
+            assert_approx_eq::assert_approx_eq!(out_buf[0][33 + i], sample1[i + 1], 0.03);
         }
 
         for i in 0..5 {
-            assert_approx_eq::assert_approx_eq!(out_buf[0][37 + i], sample1[i + 4 + 1] + sample2[i + 1], 0.0001);
+            assert_approx_eq::assert_approx_eq!(out_buf[0][37 + i], sample1[i + 4 + 1] + sample2[i + 1], 0.03);
         }
 
         for i in 0..4 {
-            assert_approx_eq::assert_approx_eq!(out_buf[0][42 + i], sample2[i + 5 + 1], 0.0001);
+            assert_approx_eq::assert_approx_eq!(out_buf[0][42 + i], sample2[i + 5 + 1], 0.03);
         }
     }
 
@@ -434,8 +479,21 @@ mod tests {
 
         // pan to left
         ruff.set_instance_parameter(inst_1, SynthParameter::StereoPosition, -1.0);
-        ruff.set_instance_parameter(inst_2, SynthParameter::StereoPosition, -1.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::LowpassCutoffFrequency, 22050.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::LowpassFilterDistortion, 0.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::LowpassQFactor, 0.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::Attack, 0.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::Release, 0.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::Sustain, 9.0 / 44100.0);
 
+        ruff.set_instance_parameter(inst_2, SynthParameter::StereoPosition, -1.0);
+	ruff.set_instance_parameter(inst_2, SynthParameter::LowpassCutoffFrequency, 22050.0);
+	ruff.set_instance_parameter(inst_2, SynthParameter::LowpassFilterDistortion, 0.0);
+	ruff.set_instance_parameter(inst_2, SynthParameter::LowpassQFactor, 0.0);
+	ruff.set_instance_parameter(inst_2, SynthParameter::Attack, 0.0);
+	ruff.set_instance_parameter(inst_2, SynthParameter::Release, 0.0);
+	ruff.set_instance_parameter(inst_2, SynthParameter::Sustain, 9.0 / 44100.0);
+	
         ruff.trigger(inst_1);
         ruff.trigger(inst_2);
         
@@ -451,7 +509,7 @@ mod tests {
         stream_time += block_duration;
                 
         for i in 0..9 {
-            assert_approx_eq::assert_approx_eq!(out_buf[0][33 + i], sample1[i + 1], 0.0001);
+            assert_approx_eq::assert_approx_eq!(out_buf[0][33 + i], sample1[i + 1], 0.03);
         }
         
         // calculate a few blocks more
@@ -463,7 +521,7 @@ mod tests {
         let out_buf = ruff.process(stream_time);
         
         for i in 0..9 {
-            assert_approx_eq::assert_approx_eq!(out_buf[0][33 + i], sample2[i + 1], 0.0001);
+            assert_approx_eq::assert_approx_eq!(out_buf[0][33 + i], sample2[i + 1], 0.03);
         }
     }
 
@@ -482,14 +540,20 @@ mod tests {
 
         // pan to left
         ruff.set_instance_parameter(inst_1, SynthParameter::StereoPosition, -1.0);
-        
+	ruff.set_instance_parameter(inst_1, SynthParameter::LowpassCutoffFrequency, 22050.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::LowpassFilterDistortion, 0.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::LowpassQFactor, 0.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::Attack, 0.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::Release, 0.0);
+	ruff.set_instance_parameter(inst_1, SynthParameter::Sustain, 9.0 / 44100.0);
+
         ruff.trigger(inst_1);
 
         // process after the instance's trigger time
         let out_buf = ruff.process(0.101);
         
         for i in 0..9 {
-            assert_approx_eq::assert_approx_eq!(out_buf[0][i], sample1[i + 1], 0.00001);
+            assert_approx_eq::assert_approx_eq!(out_buf[0][i], sample1[i + 1], 0.03);
         }        
     }
 }
