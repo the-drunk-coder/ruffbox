@@ -23,7 +23,7 @@ The script displays https://0.0.0.0:1234, but that won't work because it's not r
 
 ## Basic Idea
 
-This basically is (or is eveolving from) a proof-of-concept on how to make a multi-threaded audio application that runs in a web browser.
+This basically is (or is evolving from) a proof-of-concept on how to make a multi-threaded audio application that runs in a web browser.
 
 It has three parts that communicate over message-passing:
 
