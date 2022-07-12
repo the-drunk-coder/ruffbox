@@ -1,11 +1,11 @@
 use nom::{
     branch::alt,
-    number::complete::float,
     bytes::complete::tag,
-    character::complete::{char},    
-    multi::{separated_list, many1, many0},
-    sequence::{separated_pair, preceded, pair, delimited},
     character::complete::alphanumeric1,
+    character::complete::char,
+    multi::{many0, many1, separated_list},
+    number::complete::float,
+    sequence::{delimited, pair, preceded, separated_pair},
     IResult,
 };
 
@@ -13,24 +13,26 @@ use nom::{
 // An event is something like "sine;freq=100;dur=100" (an event type followed by a list of parameters)
 // or just the event type.
 
-// param names can be fixed for now ... 
+// param names can be fixed for now ...
 pub fn param_name(input: &str) -> IResult<&str, &str> {
-    alt((tag("atk"),
-         tag("dec"),         
-         tag("del"),         
-         tag("dur"),
-         tag("freq"),
-         tag("lvl"),
-         tag("lp-freq"),
-         tag("lp-q"),
-         tag("lp-dist"),         
-         tag("pw"),
-         tag("rate"),
-         tag("start"),
-         tag("rel"),         
-         tag("rev"),                           
-         tag("pos"),
-         tag("sus")))(input)
+    alt((
+        tag("atk"),
+        tag("dec"),
+        tag("del"),
+        tag("dur"),
+        tag("freq"),
+        tag("lvl"),
+        tag("lp-freq"),
+        tag("lp-q"),
+        tag("lp-dist"),
+        tag("pw"),
+        tag("rate"),
+        tag("start"),
+        tag("rel"),
+        tag("rev"),
+        tag("pos"),
+        tag("sus"),
+    ))(input)
 }
 
 pub fn param(input: &str) -> IResult<&str, (&str, f32)> {
@@ -41,7 +43,7 @@ pub fn param_list(input: &str) -> IResult<&str, Vec<(&str, f32)>> {
     separated_list(tag(";"), param)(input)
 }
 
-// for custom sample events, this would need to be replaced by a freeform string function ... 
+// for custom sample events, this would need to be replaced by a freeform string function ...
 pub fn event_name(input: &str) -> IResult<&str, &str> {
     alt((tag("~"), alphanumeric1, tag("_")))(input)
 }
@@ -67,8 +69,14 @@ pub fn event_pattern(input: &str) -> IResult<&str, Vec<(&str, Vec<(&str, f32)>)>
 }
 
 // VARIABLES
-pub fn variable_definiton(input: &str) -> IResult<&str, ((&str, &str), (&str, std::vec::Vec<(&str, f32)>))> {
-    separated_pair(separated_pair(tag("let"), char(' '), alphanumeric1), char('='), alt((event_with_param, event_without_param)))(input)
+pub fn variable_definiton(
+    input: &str,
+) -> IResult<&str, ((&str, &str), (&str, std::vec::Vec<(&str, f32)>))> {
+    separated_pair(
+        separated_pair(tag("let"), char(' '), alphanumeric1),
+        char('='),
+        alt((event_with_param, event_without_param)),
+    )(input)
 }
 
 // SEQ GENS
@@ -85,7 +93,11 @@ pub fn func_name(input: &str) -> IResult<&str, &str> {
 }
 
 pub fn pattern_func(input: &str) -> IResult<&str, (&str, Vec<(&str, Vec<(&str, f32)>)>)> {
-    separated_pair(func_name, delimited(many0(char(' ')), tag(">>"), many0(char(' '))), event_pattern)(input)
+    separated_pair(
+        func_name,
+        delimited(many0(char(' ')), tag(">>"), many0(char(' '))),
+        event_pattern,
+    )(input)
 }
 
 pub fn param_func_header(input: &str) -> IResult<&str, &str> {
@@ -93,25 +105,45 @@ pub fn param_func_header(input: &str) -> IResult<&str, &str> {
 }
 
 pub fn param_func(input: &str) -> IResult<&str, (&str, &str)> {
-    separated_pair(param_func_header, delimited(many0(char(' ')), char(':'), many0(char(' '))), func_name)(input)
+    separated_pair(
+        param_func_header,
+        delimited(many0(char(' ')), char(':'), many0(char(' '))),
+        func_name,
+    )(input)
 }
 
 pub fn param_func_with_values(input: &str) -> IResult<&str, ((&str, &str), Vec<f32>)> {
-    separated_pair(param_func, delimited(many0(char(' ')), tag(">>"), many0(char(' '))), separated_list(many1(char(' ')), float))(input)
+    separated_pair(
+        param_func,
+        delimited(many0(char(' ')), tag(">>"), many0(char(' '))),
+        separated_list(many1(char(' ')), float),
+    )(input)
 }
 
-pub fn pattern_line(input: &str) -> IResult<&str, ((&str, Vec<(&str, Vec<(&str, f32)>)>), Vec<((&str, &str), Vec<f32>)>)> {
-    separated_pair(pattern_func, many0(char(' ')), separated_list(many1(char(' ')), param_func_with_values))(input)
+pub fn pattern_line(
+    input: &str,
+) -> IResult<
+    &str,
+    (
+        (&str, Vec<(&str, Vec<(&str, f32)>)>),
+        Vec<((&str, &str), Vec<f32>)>,
+    ),
+> {
+    separated_pair(
+        pattern_func,
+        many0(char(' ')),
+        separated_list(many1(char(' ')), param_func_with_values),
+    )(input)
 }
 
 #[cfg(test)]
 mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
-        
+
     #[test]
     fn test_pattern_func() {
-        let res = pattern_func("rnd >> bd ~ ~ sn ~ ~");       
+        let res = pattern_func("rnd >> bd ~ ~ sn ~ ~");
         println!("Result: {:?}", res);
         assert!(res.is_ok());
     }
@@ -119,14 +151,14 @@ mod tests {
     #[test]
     fn test_pattern_line_without_params() {
         let res = pattern_line("rnd >> bd ~ ~ sn ~ ~");
-        println!("Result: {:?}", res);        
+        println!("Result: {:?}", res);
         assert!(res.is_ok());
     }
 
     #[test]
     fn test_pattern_line_with_one_param() {
         let res = pattern_line("rnd >> bd ~ ~ ~ sn ~ ~ ~ @rate: cyc >> 1.0 0.9 0.6 0.4");
-        println!("Result: {:?}", res);        
+        println!("Result: {:?}", res);
         assert!(res.is_ok());
     }
 
@@ -158,5 +190,3 @@ mod tests {
         assert!(res.is_ok());
     }
 }
-
-

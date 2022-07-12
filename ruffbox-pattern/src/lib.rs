@@ -3,13 +3,13 @@ extern crate stdweb;
 extern crate web_sys;
 
 //use js_sys::Math;
-pub mod seqgen;
 pub mod parser;
+pub mod seqgen;
 
 use std::collections::hash_map::DefaultHasher;
-use wasm_bindgen::prelude::*;
-use std::hash::{Hash, Hasher};
 use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
+use wasm_bindgen::prelude::*;
 
 use crate::seqgen::*;
 
@@ -36,13 +36,13 @@ struct MainEvent {
 }
 
 impl Hash for MainEvent {
-     fn hash<H: Hasher>(&self, state: &mut H) {
-         self.name.hash(state);
-         for (par, val) in self.params.iter() {
-             par.hash(state);
-             (*val).hash(state);
-         }
-     }    
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.name.hash(state);
+        for (par, val) in self.params.iter() {
+            par.hash(state);
+            (*val).hash(state);
+        }
+    }
 }
 
 impl MainEvent {
@@ -52,7 +52,7 @@ impl MainEvent {
         for param_tuple in input_params {
             param_map.insert(param_tuple.0.to_string(), param_tuple.1.into());
         }
-        
+
         MainEvent {
             name: input_name,
             params: param_map,
@@ -60,26 +60,26 @@ impl MainEvent {
     }
 
     fn get_raw_params(&self) -> HashMap<String, f32> {
-	let mut map = HashMap::new();
+        let mut map = HashMap::new();
 
-	for (k,v) in self.params.iter() {
-	    map.insert(k.clone(), v.into_inner());
-	}
-	
-	map
+        for (k, v) in self.params.iter() {
+            map.insert(k.clone(), v.into_inner());
+        }
+
+        map
     }
 }
 
-impl PartialEq for MainEvent {    
+impl PartialEq for MainEvent {
     fn eq(&self, other: &Self) -> bool {
         for (param, value) in self.params.iter() {
             if !other.params.contains_key(param) {
-                return false
+                return false;
             } else if *value != other.params[param] {
-                return false
+                return false;
             }
         }
-        self.name == other.name        
+        self.name == other.name
     }
 }
 
@@ -87,30 +87,36 @@ impl PartialEq for MainEvent {
 struct EventSequence {
     event_refs: HashMap<EventHash, MainEvent>,
     events: Box<dyn SequenceGenerator<EventHash, usize>>,
-    param_generators: HashMap<String, Box<dyn SequenceGenerator<N32, usize>>>
+    param_generators: HashMap<String, Box<dyn SequenceGenerator<N32, usize>>>,
 }
 
 impl EventSequence {
-        
     /// Create an event sequence from a string.    
-    pub fn from_parsed_line_ast(input_line: ((&str, Vec<(&str, Vec<(&str, f32)>)>), Vec<((&str, &str), Vec<f32>)>)) -> Self {        
+    pub fn from_parsed_line_ast(
+        input_line: (
+            (&str, Vec<(&str, Vec<(&str, f32)>)>),
+            Vec<((&str, &str), Vec<f32>)>,
+        ),
+    ) -> Self {
         let pattern_ast = input_line.0;
         let param_asts = input_line.1;
-        
+
         let mut main_events = HashMap::new();
         let mut event_hashes = Vec::new();
-        
+
         for parsed_event in pattern_ast.1.iter() {
-            let main_event = MainEvent::from_parsed_input(parsed_event.0.to_string(), &parsed_event.1);
+            let main_event =
+                MainEvent::from_parsed_input(parsed_event.0.to_string(), &parsed_event.1);
             let main_event_hash = calculate_hash::<MainEvent>(&main_event);
             main_events.insert(main_event_hash, main_event);
             event_hashes.push(main_event_hash);
         }
 
-        let mut param_row_map: HashMap<String, Box<dyn SequenceGenerator<N32, usize>>> = HashMap::new();
-        
+        let mut param_row_map: HashMap<String, Box<dyn SequenceGenerator<N32, usize>>> =
+            HashMap::new();
+
         for parsed_param_seq in param_asts.iter() {
-            let mut param_conv:Vec<N32> = Vec::new();
+            let mut param_conv: Vec<N32> = Vec::new();
             for raw_float in &parsed_param_seq.1 {
                 param_conv.push((*raw_float).into())
             }
@@ -121,42 +127,56 @@ impl EventSequence {
                     "rnd" => Box::new(RandomSequenceGenerator::from_seq(&param_conv)),
                     "cyc" => Box::new(CycleSequenceGenerator::from_seq(&param_conv)),
                     "learn" => Box::new(PfaSequenceGenerator::from_seq(&param_conv)),
-                    "bounce" => Box::new(BounceSequenceGenerator::from_params(param_conv[0], param_conv[1], param_conv[2])),
-                    "ramp" => Box::new(RampSequenceGenerator::from_params(param_conv[0], param_conv[1], param_conv[2])),
+                    "bounce" => Box::new(BounceSequenceGenerator::from_params(
+                        param_conv[0],
+                        param_conv[1],
+                        param_conv[2],
+                    )),
+                    "ramp" => Box::new(RampSequenceGenerator::from_params(
+                        param_conv[0],
+                        param_conv[1],
+                        param_conv[2],
+                    )),
                     //"brownian" => Box::new(BounceSequenceGenerator::from_params(param_conv[0], param_conv[1], param_conv[2])),
                     _ => Box::new(CycleSequenceGenerator::from_seq(&param_conv)),
-                });            
+                },
+            );
         }
-        
-                
+
         EventSequence {
             event_refs: main_events,
             events: match pattern_ast.0 {
                 "rnd" => Box::new(RandomSequenceGenerator::from_seq(&event_hashes)),
                 "cyc" => Box::new(CycleSequenceGenerator::from_seq(&event_hashes)),
                 "learn" => Box::new(PfaSequenceGenerator::from_seq(&event_hashes)),
-                _ => Box::new(CycleSequenceGenerator::from_seq(&event_hashes))
+                _ => Box::new(CycleSequenceGenerator::from_seq(&event_hashes)),
             },
-            
+
             param_generators: param_row_map,
         }
     }
 
     /// Update an existing sequence from a string.
-    pub fn update_sequence(&mut self, input_line: ((&str, Vec<(&str, Vec<(&str, f32)>)>), Vec<((&str, &str), Vec<f32>)>)) {
+    pub fn update_sequence(
+        &mut self,
+        input_line: (
+            (&str, Vec<(&str, Vec<(&str, f32)>)>),
+            Vec<((&str, &str), Vec<f32>)>,
+        ),
+    ) {
         self.event_refs.clear();
         self.param_generators.clear();
 
         let pattern_ast = input_line.0;
         let param_asts = input_line.1;
-        
+
         let mut main_events = HashMap::new();
         let mut event_hashes = Vec::new();
-                
+
         //let mut param_row_map: HashMap<String, Box<dyn SequenceGenerator<N32>>> = HashMap::new();
-        
+
         for parsed_param_seq in param_asts.iter() {
-            let mut param_conv:Vec<N32> = Vec::new();
+            let mut param_conv: Vec<N32> = Vec::new();
             for raw_float in &parsed_param_seq.1 {
                 param_conv.push((*raw_float).into())
             }
@@ -166,37 +186,53 @@ impl EventSequence {
             if self.param_generators.contains_key(&key) {
                 state = self.param_generators[&key].get_state();
             }
-            
+
             self.param_generators.insert(
                 key,
                 match (parsed_param_seq.0).1 {
                     "rnd" => Box::new(RandomSequenceGenerator::from_seq(&param_conv)),
-                    "cyc" => Box::new(CycleSequenceGenerator::from_seq_with_index(&param_conv, state)),
+                    "cyc" => Box::new(CycleSequenceGenerator::from_seq_with_index(
+                        &param_conv,
+                        state,
+                    )),
                     "learn" => Box::new(PfaSequenceGenerator::from_seq(&param_conv)),
-                    "bounce" => Box::new(BounceSequenceGenerator::from_params(param_conv[0], param_conv[1], param_conv[2])),
-                    "ramp" => Box::new(RampSequenceGenerator::from_params(param_conv[0], param_conv[1], param_conv[2])),
+                    "bounce" => Box::new(BounceSequenceGenerator::from_params(
+                        param_conv[0],
+                        param_conv[1],
+                        param_conv[2],
+                    )),
+                    "ramp" => Box::new(RampSequenceGenerator::from_params(
+                        param_conv[0],
+                        param_conv[1],
+                        param_conv[2],
+                    )),
                     //"brownian" => Box::new(BounceSequenceGenerator::from_params(param_conv[0], param_conv[1], param_conv[2])),
                     _ => Box::new(CycleSequenceGenerator::from_seq(&param_conv)),
-                });            
+                },
+            );
         }
 
         for parsed_event in pattern_ast.1.iter() {
-            let main_event = MainEvent::from_parsed_input(parsed_event.0.to_string(), &parsed_event.1);
+            let main_event =
+                MainEvent::from_parsed_input(parsed_event.0.to_string(), &parsed_event.1);
             let main_event_hash = calculate_hash::<MainEvent>(&main_event);
             main_events.insert(main_event_hash, main_event);
             event_hashes.push(main_event_hash);
         }
-        
+
         self.event_refs = main_events;
 
         let cycle_state = self.events.get_state();
-                
+
         self.events = match pattern_ast.0 {
             "rnd" => Box::new(RandomSequenceGenerator::from_seq(&event_hashes)),
-            "cyc" => Box::new(CycleSequenceGenerator::from_seq_with_index(&event_hashes, cycle_state)),
+            "cyc" => Box::new(CycleSequenceGenerator::from_seq_with_index(
+                &event_hashes,
+                cycle_state,
+            )),
             "learn" => Box::new(PfaSequenceGenerator::from_seq(&event_hashes)),
-            _ => Box::new(CycleSequenceGenerator::from_seq(&event_hashes))
-        };        
+            _ => Box::new(CycleSequenceGenerator::from_seq(&event_hashes)),
+        };
     }
 
     /// get the next event in the sequence
@@ -206,7 +242,7 @@ impl EventSequence {
             Some(ev_hash) => {
                 let ev = &self.event_refs[&ev_hash];
                 if ev.name == "~" {
-                    return ("~".to_string(), final_param_map)
+                    return ("~".to_string(), final_param_map);
                 }
                 // pref for dyn params, so insert fixed pars first (might be overwritten)
                 for (par, val) in ev.params.iter() {
@@ -217,14 +253,14 @@ impl EventSequence {
                 for (par, gen) in self.param_generators.iter_mut() {
                     match gen.get_next() {
                         Some(val) => final_param_map.insert(par.to_string(), val.into()),
-                        None => None
+                        None => None,
                     };
                 }
-                
+
                 (ev.name.clone(), final_param_map)
-            },
-            None => ("~".to_string(), final_param_map)
-        }                                               
+            }
+            None => ("~".to_string(), final_param_map),
+        }
     }
 }
 
@@ -234,7 +270,7 @@ pub struct Scheduler {
     /// time this scheduler was started (AudioContext.currentTime)
     audio_start_time: f64,
     /// time this scheduler was started (performance.now())
-    browser_start_time: f64,    
+    browser_start_time: f64,
     audio_logical_time: f64,
     browser_logical_time: f64,
     next_schedule_time: f64,
@@ -242,13 +278,13 @@ pub struct Scheduler {
     running: bool,
     tempo: f64, // currently just the duration of a 16th note ...
     event_sequences: Vec<EventSequence>,
-    event_variables: HashMap<String, MainEvent>
+    event_variables: HashMap<String, MainEvent>,
 }
 
 #[wasm_bindgen]
 impl Scheduler {
     pub fn new() -> Self {
-        Scheduler{
+        Scheduler {
             audio_start_time: 0.0,
             browser_start_time: 0.0,
             audio_logical_time: 0.0,
@@ -258,44 +294,50 @@ impl Scheduler {
             running: false,
             tempo: 128.0,
             event_sequences: Vec::new(),
-	    event_variables: HashMap::new(),
+            event_variables: HashMap::new(),
         }
     }
 
     /// Evaluate an input string, turn it into a series of event sequences.
-    pub fn evaluate(&mut self, input: Option<String>) {        
+    pub fn evaluate(&mut self, input: Option<String>) {
         match input {
-            Some(all_lines) => {                                               
+            Some(all_lines) => {
                 let mut seq_idx = 0;
 
                 for line in all_lines.lines() {
                     let trimmed_line = line.trim();
-                    
+
                     if !trimmed_line.is_empty() && !trimmed_line.starts_with('#') {
-			// only these two for now ... could probably be solved more elegantly in the
-			// parser itself ...
-			match parser::variable_definiton(trimmed_line) {
+                        // only these two for now ... could probably be solved more elegantly in the
+                        // parser itself ...
+                        match parser::variable_definiton(trimmed_line) {
                             Ok(var_ast) => {
                                 let res = var_ast.1;
-				let var_def = res.0;
-				let ev_def = res.1;
-				let name = var_def.1;
-				let event = MainEvent::from_parsed_input(ev_def.0.to_string(), &ev_def.1);
-				self.event_variables.insert(name.to_string(),event);
-                            },
-                            Err(_) => {				
-				match parser::pattern_line(trimmed_line) {
-				    Ok(pat_ast) => {
-					if self.event_sequences.len() > seq_idx {
-					    self.event_sequences[seq_idx].update_sequence(pat_ast.1);
-					} else {
-					    self.event_sequences.push(EventSequence::from_parsed_line_ast(pat_ast.1));
-					}
-				    },
-				    Err(pat_err) => log!("invalid line! {:?}, {}", pat_err, trimmed_line) // ??
-				};
-				seq_idx += 1;
-			    }
+                                let var_def = res.0;
+                                let ev_def = res.1;
+                                let name = var_def.1;
+                                let event =
+                                    MainEvent::from_parsed_input(ev_def.0.to_string(), &ev_def.1);
+                                self.event_variables.insert(name.to_string(), event);
+                            }
+                            Err(_) => {
+                                match parser::pattern_line(trimmed_line) {
+                                    Ok(pat_ast) => {
+                                        if self.event_sequences.len() > seq_idx {
+                                            self.event_sequences[seq_idx]
+                                                .update_sequence(pat_ast.1);
+                                        } else {
+                                            self.event_sequences.push(
+                                                EventSequence::from_parsed_line_ast(pat_ast.1),
+                                            );
+                                        }
+                                    }
+                                    Err(pat_err) => {
+                                        log!("invalid line! {:?}, {}", pat_err, trimmed_line)
+                                    } // ??
+                                };
+                                seq_idx += 1;
+                            }
                         };
                     }
                 }
@@ -305,43 +347,42 @@ impl Scheduler {
                     self.event_sequences.truncate(seq_idx);
                 }
             }
-            
-            None => log!("no input!")
+
+            None => log!("no input!"),
         }
-    }    
+    }
 
     /// Fetch all events from the event sequences, post them to main thread
     fn generate_and_send_events(&mut self) {
         if self.event_sequences.is_empty() {
-            return
+            return;
         }
 
         let trigger_time = self.audio_logical_time + self.lookahead;
-        
+
         for seq in self.event_sequences.iter_mut() {
-            
             let (mut next_event, mut next_params) = seq.get_next_event();
 
-	    // overwrite with variable if there is one ...
-	    if self.event_variables.contains_key(&next_event) {
-		// first get params, then overwrite key
-		let var_params = self.event_variables[&next_event].get_raw_params();
-		for (k,v) in var_params {
-		    next_params.entry(k).or_insert(v);
-		}
-		next_event = self.event_variables[&next_event].name.clone();		
-	    }
-            
+            // overwrite with variable if there is one ...
+            if self.event_variables.contains_key(&next_event) {
+                // first get params, then overwrite key
+                let var_params = self.event_variables[&next_event].get_raw_params();
+                for (k, v) in var_params {
+                    next_params.entry(k).or_insert(v);
+                }
+                next_event = self.event_variables[&next_event].name.clone();
+            }
+
             let next_source_type = match next_event.as_str() {
                 "sine" => "SineSynth",
                 "saw" => "LFSawSynth",
                 "sqr" => "LFSquareSynth",
                 _ => "Sampler",
             };
-                                                           
+
             if next_event != "~" {
                 // post events that will be dispatched to sampler
-                js! {                
+                js! {
                     postMessage( { source_type: @{ next_source_type }, timestamp: @{ trigger_time }, sample_id: @{ next_event }, params: @{ next_params }} );
                 }
             }
@@ -351,7 +392,7 @@ impl Scheduler {
     /// The main scheduler recursion.
     pub fn scheduler_routine(&mut self, browser_timestamp: f64) {
         if !self.running {
-            return
+            return;
         }
 
         // Get current events and post them to main thread.
@@ -370,12 +411,12 @@ impl Scheduler {
 
         // browser time in milliseconds
         self.browser_logical_time += self.tempo;
-        
+
         // Time-recursive call to scheduler function.
-        // i'm looking forward to the day I can do that in pure rust ... 
-        js! {            
+        // i'm looking forward to the day I can do that in pure rust ...
+        js! {
             self.sleep( @{ self.next_schedule_time } ).then( () => self.scheduler.scheduler_routine( performance.now()));
-        };                
+        };
     }
 
     /// Start this scheduler.
