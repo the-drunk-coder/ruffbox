@@ -113,49 +113,49 @@ mod tests {
     fn test_pattern_func() {
         let res = pattern_func("rnd >> bd ~ ~ sn ~ ~");       
         println!("Result: {:?}", res);
-        assert!(!res.is_err());
+        assert!(res.is_ok());
     }
 
     #[test]
     fn test_pattern_line_without_params() {
         let res = pattern_line("rnd >> bd ~ ~ sn ~ ~");
         println!("Result: {:?}", res);        
-        assert!(!res.is_err());
+        assert!(res.is_ok());
     }
 
     #[test]
     fn test_pattern_line_with_one_param() {
         let res = pattern_line("rnd >> bd ~ ~ ~ sn ~ ~ ~ @rate: cyc >> 1.0 0.9 0.6 0.4");
         println!("Result: {:?}", res);        
-        assert!(!res.is_err());
+        assert!(res.is_ok());
     }
 
     #[test]
     fn test_param_func() {
         let res = param_func_with_values("@rate: rnd >> 1.0 0.9 0.6 0.4");
         println!("Result: {:?}", res);
-        assert!(!res.is_err());
+        assert!(res.is_ok());
     }
 
     #[test]
     fn test_param_func_header() {
         let res = param_func_header("@rate");
         println!("Result: {:?}", res);
-        assert!(!res.is_err());
+        assert!(res.is_ok());
     }
 
     #[test]
     fn test_var_def_with_param() {
         let res = variable_definiton("let xs=sine;lvl=0.0");
         println!("Result: {:?}", res);
-        assert!(!res.is_err());
+        assert!(res.is_ok());
     }
 
     #[test]
     fn test_var_def_without_param() {
         let res = variable_definiton("let xs=sine");
         println!("Result: {:?}", res);
-        assert!(!res.is_err());
+        assert!(res.is_ok());
     }
 }
 

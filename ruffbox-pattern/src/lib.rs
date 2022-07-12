@@ -54,7 +54,7 @@ impl MainEvent {
         }
         
         MainEvent {
-            name: input_name.to_string(),
+            name: input_name,
             params: param_map,
         }
     }
@@ -271,7 +271,7 @@ impl Scheduler {
                 for line in all_lines.lines() {
                     let trimmed_line = line.trim();
                     
-                    if !trimmed_line.is_empty() && !trimmed_line.starts_with("#") {
+                    if !trimmed_line.is_empty() && !trimmed_line.starts_with('#') {
 			// only these two for now ... could probably be solved more elegantly in the
 			// parser itself ...
 			match parser::variable_definiton(trimmed_line) {
@@ -327,9 +327,7 @@ impl Scheduler {
 		// first get params, then overwrite key
 		let var_params = self.event_variables[&next_event].get_raw_params();
 		for (k,v) in var_params {
-		    if !next_params.contains_key(&k) {
-			next_params.insert(k, v);
-		    }
+		    next_params.entry(k).or_insert(v);
 		}
 		next_event = self.event_variables[&next_event].name.clone();		
 	    }

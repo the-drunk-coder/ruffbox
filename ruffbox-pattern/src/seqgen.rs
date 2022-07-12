@@ -27,7 +27,7 @@ impl <T: Copy + Ord> RandomSequenceGenerator<T> {
 
 impl <T: Copy> SequenceGenerator<T, usize> for RandomSequenceGenerator<T> {    
     fn get_next(&mut self) -> Option<T> {
-	self.items.choose(&mut rand::thread_rng()).map(|thing| *thing)            
+	self.items.choose(&mut rand::thread_rng()).copied()            
     }
 
     fn get_state(&self) -> usize {
@@ -93,7 +93,7 @@ pub struct PfaSequenceGenerator<T: Eq + Copy + Hash + Ord + std::fmt::Debug> {
 impl <T: Eq + Copy + Hash + Ord + std::fmt::Debug> PfaSequenceGenerator<T> {
     pub fn from_seq(seq: &Vec<T>) -> Self {        
         PfaSequenceGenerator {            
-            pfa: Pfa::learn(&seq, 3, 0.01, 30),
+            pfa: Pfa::learn(seq, 3, 0.01, 30),
         }
     }
 }
@@ -133,7 +133,7 @@ impl RampSequenceGenerator {
 impl SequenceGenerator<N32, usize> for RampSequenceGenerator {    
     fn get_next(&mut self) -> Option<N32> {
         let cur = self.min + self.step_count * self.inc;
-        self.step_count = self.step_count + 1.0;
+        self.step_count += 1.0;
         if self.step_count > self.steps {
             self.step_count = (0.0).into();
         }
@@ -162,7 +162,7 @@ pub struct BounceSequenceGenerator {
 impl BounceSequenceGenerator {
     pub fn from_params(min: N32, max: N32, steps: N32) -> Self {
         let mut dec_inc:N32 = (360.0).into();
-        dec_inc = dec_inc / steps;
+        dec_inc /= steps;
         BounceSequenceGenerator {                        
             min,
             range: max - min,
@@ -183,7 +183,7 @@ impl SequenceGenerator<N32, usize> for BounceSequenceGenerator {
         let range_raw:f32 = self.range.into();
                 
         let degree:f32 = (deg_inc_raw * (step_count_raw % steps_raw)) % 360.0;
-        let abs_sin:f32 = degree.to_radians().sin().abs().into();
+        let abs_sin:f32 = degree.to_radians().sin().abs();
         
         let cur:f32 = min_raw + (abs_sin * range_raw);
 
