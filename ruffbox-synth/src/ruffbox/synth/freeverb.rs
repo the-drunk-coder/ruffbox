@@ -196,16 +196,16 @@ impl StereoFreeverb {
         let wet2 = wet * ((1.0 - FreeverbDefaultTuning::INITIAL_WIDTH) / 2.0);
 
         StereoFreeverb {
-            comb_l: comb_l,
-            comb_r: comb_r,
-            allpass_l: allpass_l,
-            allpass_r: allpass_r,
+            comb_l,
+            comb_r,
+            allpass_l,
+            allpass_r,
             gain: FreeverbDefaultTuning::FIXED_GAIN,
             roomsize: FreeverbDefaultTuning::INITIAL_ROOM,
             damp: FreeverbDefaultTuning::INITIAL_DAMP,
             wet: FreeverbDefaultTuning::INITIAL_WET,
-            wet1: wet1,
-            wet2: wet2,
+            wet1,
+            wet2,
             width: FreeverbDefaultTuning::INITIAL_WIDTH,
         }
     }

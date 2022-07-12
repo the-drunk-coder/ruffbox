@@ -31,7 +31,7 @@ impl Sampler {
             frac_index_increment: 1.0,
             state: SynthState::Fresh,
             level: 1.0,
-            repeat: repeat,
+            repeat,
         }
     }
 
@@ -42,14 +42,12 @@ impl Sampler {
             out_buf[i] = self.buffer_ref[self.index] * self.level;
             
             if self.index < self.buffer_len {
-                self.index = self.index + 1;
+                self.index += 1;
+            } else if self.repeat {
+                self.frac_index = 1.0;
+                self.index = 1;
             } else {
-                if self.repeat {
-                    self.frac_index = 1.0;
-                    self.index = 1;
-                } else {
-                    self.finish();
-                }                
+                self.finish();
             }
         }
         
@@ -79,14 +77,12 @@ impl Sampler {
             out_buf[i] = (((c3 * frac + c2) * frac + c1) * frac + c0) * self.level ;
                         
             if ((self.frac_index + self.frac_index_increment) as usize) < self.buffer_len {                
-                self.frac_index = self.frac_index + self.frac_index_increment;
+                self.frac_index += self.frac_index_increment;
+            } else if self.repeat {
+                self.frac_index = 1.0;
+                self.index = 1;
             } else {
-                if self.repeat {
-                    self.frac_index = 1.0;
-                    self.index = 1;
-                } else {
-                    self.finish();
-                }               
+                self.finish();
             }
         }
         

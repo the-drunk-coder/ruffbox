@@ -29,10 +29,10 @@ impl ASREnvelope {
         //println!("atk sam: {} sus sam: {} rel sam: {}", atk_samples.round(), sus_samples.round(), rel_samples.round());
         
         ASREnvelope {
-            samplerate: samplerate,
-            atk: atk,
-            sus: sus,
-            rel: rel,
+            samplerate,
+            atk,
+            sus,
+            rel,
             atk_samples: atk_samples as usize,
             sus_samples: sus_samples as usize,
             rel_samples: rel_samples as usize,
@@ -264,7 +264,7 @@ mod tests {
         env_with_offset.set_parameter(SynthParameter::Sustain, 0.019);
         env_with_offset.set_parameter(SynthParameter::Release, 0.07);
 
-        println!("");
+        println!();
         
         let mut out_start = env_at_start.process_block(test_block, 0);
         let mut out_offset = env_with_offset.process_block(test_block, 60);

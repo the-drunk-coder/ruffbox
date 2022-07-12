@@ -17,7 +17,7 @@ pub struct SineOsc {
 impl SineOsc {    
     pub fn new(freq: f32, lvl: f32, sr: f32) -> Self {
         SineOsc {
-            lvl: lvl,            
+            lvl,            
             sin_time: 0.0,
             sin_delta_time: 1.0 / sr,
             pi_slice: 2.0 * PI * freq,
@@ -73,8 +73,8 @@ pub struct LFSaw {
 impl LFSaw {    
     pub fn new(freq: f32, lvl: f32, sr: f32) -> Self {
         LFSaw {
-            freq: freq,
-            lvl: lvl,
+            freq,
+            lvl,
             samplerate: sr,
             period_samples: (sr / freq).round() as usize,
             lvl_inc: (2.0 * lvl) / (sr / freq).round(),
@@ -142,8 +142,8 @@ pub struct LFSquare {
 impl LFSquare {    
     pub fn new(freq: f32, pw: f32, lvl: f32, sr: f32) -> Self {
         LFSquare {
-            freq: freq,
-            lvl: lvl,
+            freq,
+            lvl,
             samplerate: sr,
             pulsewidth: pw,
             period_samples: (sr / freq).round() as usize,            

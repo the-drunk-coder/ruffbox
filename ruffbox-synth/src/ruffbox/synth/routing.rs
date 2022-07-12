@@ -23,7 +23,7 @@ impl Balance2 {
                 let angle_rad = -1.0 * value * PI * 0.25;
                 let angle_cos = angle_rad.cos();
                 let angle_sin = angle_rad.sin();
-                let sqrt_two_half = (2.0 as f32).sqrt() / 2.0;
+                let sqrt_two_half = 2.0_f32.sqrt() / 2.0;
                 self.left_level = sqrt_two_half * (angle_cos + angle_sin);
                 self.right_level = sqrt_two_half * (angle_cos - angle_sin);     
             },
