@@ -8,15 +8,15 @@ pub struct Balance2 {
 
 impl Balance2 {
     pub fn new() -> Self {
-        let bal:f32 = 0.5;
+        let bal: f32 = 0.5;
         let bal_sqrt = bal.sqrt();
-        Balance2 {            
+        Balance2 {
             left_level: bal_sqrt,
             right_level: bal_sqrt,
         }
     }
-    
-    /// some parameter limits might be nice ... 
+
+    /// some parameter limits might be nice ...
     pub fn set_parameter(&mut self, par: SynthParameter, value: f32) {
         match par {
             SynthParameter::StereoPosition => {
@@ -25,8 +25,8 @@ impl Balance2 {
                 let angle_sin = angle_rad.sin();
                 let sqrt_two_half = 2.0_f32.sqrt() / 2.0;
                 self.left_level = sqrt_two_half * (angle_cos + angle_sin);
-                self.right_level = sqrt_two_half * (angle_cos - angle_sin);     
-            },
+                self.right_level = sqrt_two_half * (angle_cos - angle_sin);
+            }
             _ => (),
         };
     }
@@ -41,8 +41,7 @@ impl Balance2 {
     }
 }
 
-
-// TEST TEST TEST 
+// TEST TEST TEST
 #[cfg(test)]
 mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
@@ -54,7 +53,7 @@ mod tests {
 
         let mut block = [0.0; 128];
         block[0] = 1.0;
-        
+
         let block_out = bal2.process_block(block);
 
         assert_approx_eq::assert_approx_eq!(block_out[0][0], 0.707, 0.001);
@@ -66,10 +65,10 @@ mod tests {
         let mut bal2 = Balance2::new();
 
         bal2.set_parameter(SynthParameter::StereoPosition, -1.0);
-        
+
         let mut block = [0.0; 128];
         block[0] = 1.0;
-        
+
         let block_out = bal2.process_block(block);
 
         assert_approx_eq::assert_approx_eq!(block_out[0][0], 1.0, 0.0001);
@@ -81,10 +80,10 @@ mod tests {
         let mut bal2 = Balance2::new();
 
         bal2.set_parameter(SynthParameter::StereoPosition, 1.0);
-        
+
         let mut block = [0.0; 128];
         block[0] = 1.0;
-        
+
         let block_out = bal2.process_block(block);
 
         assert_approx_eq::assert_approx_eq!(block_out[0][0], 0.0, 0.0001);

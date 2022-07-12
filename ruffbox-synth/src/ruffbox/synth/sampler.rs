@@ -1,7 +1,7 @@
 // parent imports
 use crate::ruffbox::synth::Source;
-use crate::ruffbox::synth::SynthState;
 use crate::ruffbox::synth::SynthParameter;
+use crate::ruffbox::synth::SynthState;
 
 use std::sync::Arc;
 
@@ -20,8 +20,8 @@ pub struct Sampler {
     repeat: bool,
 }
 
-impl Sampler {    
-    pub fn with_buffer_ref(buf: &Arc<Vec<f32>>, repeat: bool) -> Sampler {        
+impl Sampler {
+    pub fn with_buffer_ref(buf: &Arc<Vec<f32>>, repeat: bool) -> Sampler {
         Sampler {
             index: 1, // start with one to account for interpolation
             frac_index: 1.0,
@@ -38,9 +38,9 @@ impl Sampler {
     fn get_next_block_no_interp(&mut self, start_sample: usize) -> [f32; 128] {
         let mut out_buf: [f32; 128] = [0.0; 128];
 
-        for i in start_sample..128 {            
+        for i in start_sample..128 {
             out_buf[i] = self.buffer_ref[self.index] * self.level;
-            
+
             if self.index < self.buffer_len {
                 self.index += 1;
             } else if self.repeat {
@@ -50,7 +50,7 @@ impl Sampler {
                 self.finish();
             }
         }
-        
+
         out_buf
     }
 
@@ -60,7 +60,7 @@ impl Sampler {
         for i in start_sample..128 {
             // get sample:
             let idx = self.frac_index.floor();
-            let frac = self.frac_index - idx;             
+            let frac = self.frac_index - idx;
             let idx_u = idx as usize;
 
             // 4-point, 3rd-order Hermite
@@ -73,10 +73,10 @@ impl Sampler {
             let c1 = 0.5 * (y_1 - y_m1);
             let c2 = y_m1 - 2.5 * y_0 + 2.0 * y_1 - 0.5 * y_2;
             let c3 = 0.5 * (y_2 - y_m1) + 1.5 * (y_0 - y_1);
-            
-            out_buf[i] = (((c3 * frac + c2) * frac + c1) * frac + c0) * self.level ;
-                        
-            if ((self.frac_index + self.frac_index_increment) as usize) < self.buffer_len {                
+
+            out_buf[i] = (((c3 * frac + c2) * frac + c1) * frac + c0) * self.level;
+
+            if ((self.frac_index + self.frac_index_increment) as usize) < self.buffer_len {
                 self.frac_index += self.frac_index_increment;
             } else if self.repeat {
                 self.frac_index = 1.0;
@@ -85,31 +85,30 @@ impl Sampler {
                 self.finish();
             }
         }
-        
+
         out_buf
     }
 }
 
 impl Source for Sampler {
-
     fn set_parameter(&mut self, par: SynthParameter, value: f32) {
         match par {
             SynthParameter::PlaybackStart => {
                 let offset = (self.buffer_len as f32 * value) as usize;
                 self.index = offset;
                 self.frac_index = offset as f32;
-            },            
+            }
             SynthParameter::PlaybackRate => {
                 self.playback_rate = value;
                 self.frac_index_increment = 1.0 * value;
-            },
+            }
             SynthParameter::Level => {
                 self.level = value;
-            },
-           _ => (),
+            }
+            _ => (),
         };
     }
-    
+
     fn finish(&mut self) {
         self.state = SynthState::Finished;
     }
@@ -120,12 +119,12 @@ impl Source for Sampler {
             _ => false,
         }
     }
-    
+
     fn get_next_block(&mut self, start_sample: usize) -> [f32; 128] {
         if self.playback_rate == 1.0 {
             self.get_next_block_no_interp(start_sample)
         } else {
             self.get_next_block_interp(start_sample)
         }
-    }   
+    }
 }

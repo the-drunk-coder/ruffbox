@@ -23,25 +23,33 @@ lazy_static! {
 pub extern "C" fn process(out_ptr_l: *mut f32, out_ptr_r: *mut f32, size: usize, stream_time: f64) {
     let mut ruff = RUFF.lock();
 
-    let out_buf_l: &mut [f32] = unsafe { std::slice::from_raw_parts_mut(out_ptr_l, size)};
-    let out_buf_r: &mut [f32] = unsafe { std::slice::from_raw_parts_mut(out_ptr_r, size)};
+    let out_buf_l: &mut [f32] = unsafe { std::slice::from_raw_parts_mut(out_ptr_l, size) };
+    let out_buf_r: &mut [f32] = unsafe { std::slice::from_raw_parts_mut(out_ptr_r, size) };
 
-    // mono for now ... 
+    // mono for now ...
     let out = ruff.process(stream_time);
     for i in 0..128 {
         out_buf_l[i] = out[0][i];
         out_buf_r[i] = out[1][i];
-    }    
+    }
 }
 
 #[no_mangle]
-pub extern "C" fn prepare(src_type: ruffbox::synth::SourceType, timestamp: f64, sample_buf: usize) -> usize {
+pub extern "C" fn prepare(
+    src_type: ruffbox::synth::SourceType,
+    timestamp: f64,
+    sample_buf: usize,
+) -> usize {
     let mut ruff = RUFF.lock();
     ruff.prepare_instance(src_type, timestamp, sample_buf)
 }
 
 #[no_mangle]
-pub extern "C" fn set_instance_parameter(instance_id: usize, par: ruffbox::synth::SynthParameter, val: f32) {
+pub extern "C" fn set_instance_parameter(
+    instance_id: usize,
+    par: ruffbox::synth::SynthParameter,
+    val: f32,
+) {
     let mut ruff = RUFF.lock();
     ruff.set_instance_parameter(instance_id, par, val);
 }
@@ -61,7 +69,6 @@ pub extern "C" fn trigger(instance_id: usize) {
 #[no_mangle]
 pub extern "C" fn load(sample_ptr: *mut f32, size: usize) -> usize {
     let mut ruff = RUFF.lock();
-    let in_buf: &mut [f32] = unsafe { std::slice::from_raw_parts_mut(sample_ptr, size)};
+    let in_buf: &mut [f32] = unsafe { std::slice::from_raw_parts_mut(sample_ptr, size) };
     ruff.load_sample(in_buf)
 }
-

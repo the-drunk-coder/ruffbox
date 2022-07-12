@@ -1,11 +1,11 @@
-use crate::ruffbox::synth::*;
-use crate::ruffbox::synth::oscillators::*;
 use crate::ruffbox::synth::envelopes::*;
 use crate::ruffbox::synth::filters::*;
+use crate::ruffbox::synth::oscillators::*;
 use crate::ruffbox::synth::routing::Balance2;
 use crate::ruffbox::synth::sampler::Sampler;
 use crate::ruffbox::synth::StereoSynth;
 use crate::ruffbox::synth::SynthParameter;
+use crate::ruffbox::synth::*;
 
 use std::sync::Arc;
 
@@ -34,12 +34,12 @@ impl StereoSynth for SineSynth {
     fn set_parameter(&mut self, par: SynthParameter, val: f32) {
         self.oscillator.set_parameter(par, val);
         self.envelope.set_parameter(par, val);
-        self.balance.set_parameter(par, val);        
+        self.balance.set_parameter(par, val);
         match par {
             SynthParameter::ReverbMix => self.reverb = val,
             SynthParameter::DelayMix => self.delay = val,
             _ => (),
-        };        
+        };
     }
 
     fn finish(&mut self) {
@@ -117,11 +117,11 @@ impl StereoSynth for LFSawSynth {
         self.balance.process_block(out)
     }
 
-    fn reverb_level(&self) -> f32 { 
+    fn reverb_level(&self) -> f32 {
         self.reverb
     }
 
-    fn delay_level(&self) -> f32 { 
+    fn delay_level(&self) -> f32 {
         self.delay
     }
 }
@@ -178,11 +178,11 @@ impl StereoSynth for LFSquareSynth {
         self.balance.process_block(out)
     }
 
-    fn reverb_level(&self) -> f32 { 
+    fn reverb_level(&self) -> f32 {
         self.reverb
     }
 
-    fn delay_level(&self) -> f32 { 
+    fn delay_level(&self) -> f32 {
         self.delay
     }
 }
@@ -200,7 +200,7 @@ pub struct StereoSampler {
 impl StereoSampler {
     pub fn with_buffer_ref(buf: &Arc<Vec<f32>>, sr: f32) -> StereoSampler {
         let dur = (buf.len() as f32 / sr) - 0.0002;
-        
+
         StereoSampler {
             sampler: Sampler::with_buffer_ref(buf, true),
             envelope: ASREnvelope::new(sr, 1.0, 0.0001, dur, 0.0001),
@@ -214,12 +214,12 @@ impl StereoSampler {
 
 impl StereoSynth for StereoSampler {
     fn set_parameter(&mut self, par: SynthParameter, val: f32) {
-        self.sampler.set_parameter(par, val);        
+        self.sampler.set_parameter(par, val);
         self.filter.set_parameter(par, val);
         self.envelope.set_parameter(par, val);
         self.balance.set_parameter(par, val);
 
-        match par {            
+        match par {
             SynthParameter::ReverbMix => self.reverb = val,
             SynthParameter::DelayMix => self.delay = val,
             _ => (),
@@ -231,7 +231,7 @@ impl StereoSynth for StereoSampler {
     }
 
     fn is_finished(&self) -> bool {
-        self.envelope.is_finished()   
+        self.envelope.is_finished()
     }
 
     fn get_next_block(&mut self, start_sample: usize) -> [[f32; 128]; 2] {
