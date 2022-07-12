@@ -2,7 +2,7 @@
 name = "ruffbox-pattern"
 version = "2.1.0"
 authors = ["Niklas <nik@parkellipsen.de>"]
-edition = "2018"
+edition = "2021"
 license = "GPL-3.0+"
 
 [lib]
@@ -14,7 +14,7 @@ stdweb = "0.4.20"
 js-sys = "0.3"
 vom_rs = { git = "https://gitlab.com/ellipsenpark/vom.rs" }
 nom = "5.0"
-rand = { version = "0.7", features = ["wasm-bindgen"] }
+rand = { version = "0.8"}
 decorum = "0.3"
 
 [dependencies.web-sys]

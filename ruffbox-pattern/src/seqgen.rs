@@ -18,7 +18,7 @@ pub struct RandomSequenceGenerator<T> {
 }
 
 impl <T: Copy + Ord> RandomSequenceGenerator<T> {
-    pub fn from_seq(seq: &Vec<T>) -> Self {
+    pub fn from_seq(seq: &[T]) -> Self {
         RandomSequenceGenerator {
             items: seq.to_vec(),
         }
@@ -27,10 +27,7 @@ impl <T: Copy + Ord> RandomSequenceGenerator<T> {
 
 impl <T: Copy> SequenceGenerator<T, usize> for RandomSequenceGenerator<T> {    
     fn get_next(&mut self) -> Option<T> {
-        match self.items.choose(&mut rand::thread_rng()) {
-            Some(thing) => Some(*thing),
-            None => None                
-        }
+	self.items.choose(&mut rand::thread_rng()).map(|thing| *thing)            
     }
 
     fn get_state(&self) -> usize {
@@ -89,11 +86,11 @@ impl <T: Copy> SequenceGenerator<T, usize> for CycleSequenceGenerator<T> {
 // PFA //
 /////////
 
-pub struct PfaSequenceGenerator<T: Eq + Copy + Hash + Ord> {
+pub struct PfaSequenceGenerator<T: Eq + Copy + Hash + Ord + std::fmt::Debug> {
     pfa: Pfa<T>,
 }
 
-impl <T: Eq + Copy + Hash + Ord> PfaSequenceGenerator<T> {
+impl <T: Eq + Copy + Hash + Ord + std::fmt::Debug> PfaSequenceGenerator<T> {
     pub fn from_seq(seq: &Vec<T>) -> Self {        
         PfaSequenceGenerator {            
             pfa: Pfa::learn(&seq, 3, 0.01, 30),
@@ -101,7 +98,7 @@ impl <T: Eq + Copy + Hash + Ord> PfaSequenceGenerator<T> {
     }
 }
 
-impl <T: Eq + Copy + Hash + Ord> SequenceGenerator<T, usize> for PfaSequenceGenerator<T> {    
+impl <T: Eq + Copy + Hash + Ord + std::fmt::Debug> SequenceGenerator<T, usize> for PfaSequenceGenerator<T> {    
     fn get_next(&mut self) -> Option<T> {
         self.pfa.next_symbol()
     }
@@ -125,9 +122,9 @@ pub struct RampSequenceGenerator {
 impl RampSequenceGenerator {
     pub fn from_params(min: N32, max: N32, steps: N32) -> Self {        
         RampSequenceGenerator {            
-            min: min,
+            min,
             inc: (max - min) / steps,
-            steps: steps,
+            steps,
             step_count: (0.0).into(),
         }
     }
@@ -167,10 +164,10 @@ impl BounceSequenceGenerator {
         let mut dec_inc:N32 = (360.0).into();
         dec_inc = dec_inc / steps;
         BounceSequenceGenerator {                        
-            min: min,
+            min,
             range: max - min,
             degree_inc: dec_inc,            
-            steps: steps,
+            steps,
             step_count: (0.0).into(),
         }
     }
