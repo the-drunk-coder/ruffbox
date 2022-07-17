@@ -10,9 +10,6 @@ cd ..
 
 echo "compile scheduler to wasm"
 cd ruffbox-pattern
-wasm-pack build --target web
-
-mkdir -p ../js/pkg
-cp -r pkg/* ../js/pkg/
+wasm-pack build --out-dir ../js/pkg --target no-modules
 
 echo "finish!"

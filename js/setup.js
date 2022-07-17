@@ -1,3 +1,17 @@
+const {startup} = wasm_bindgen;
+
+async function run_wasm() {
+    // Load the wasm file by awaiting the Promise returned by `wasm_bindgen`
+    // `wasm_bindgen` was imported in `index.html`
+    await wasm_bindgen('/js/pkg/ruffbox_pattern_bg.wasm');
+    
+    console.log('ruffbox_pattern_bg loaded');
+    
+    // Run main WASM entry point
+    // This will create a worker from within our Rust code compiled to WASM
+    startup();
+}
+
 const sourceType = Object.freeze({
     "Sampler" : 0,
     "SineOsc" : 1,
@@ -146,13 +160,15 @@ if (ctx.audioWorklet === undefined) {
 	    //////////////////////////
 	    
 	    // this only works in latest chrome/chromium with experimental features flag enabled ...
-	    let scheduler = new Worker('js/scheduler.js', { type : "module"});
+	    //let scheduler = new Worker('js/scheduler.js', { type : "module"});
 
 	    // set event scheduler message callback
-	    scheduler.onmessage = function(event) {
+	    //scheduler.onmessage = function(event) {
 		// dispatch to sampler module ...
-		n.port.postMessage({ type: 'trigger', event: event.data })
-	    };
+	    //n.port.postMessage({ type: 'trigger', event: event.data })
+	    //};
+
+	    run_wasm();
 
 	    ///////////////////
 	    // LOAD MAPPINGS //
@@ -195,26 +211,8 @@ if (ctx.audioWorklet === undefined) {
 		n.parameters.get('delay_cutoff').value = e.target.value
 	    })
 	    	    
-	    // scheduler controls
-	    const startSched = document.getElementById('start-scheduler')	   
-	    startSched.addEventListener('change', e => {
-		if (e.target.value === 1) {
-		    if(ctx.state === "suspended"){
-			ctx.resume();
-		    }
-		    if(!(document.getElementById('tempo').value === tempo)){
-			tempo = document.getElementById('tempo').value;
-			scheduler.postMessage({ cmd: 'set_tempo' , tempo: tempo });
-		    }
-		    scheduler.postMessage({ cmd: 'evaluate_loop' , loop_data: document.getElementById('code_input').value });
-		    scheduler.postMessage({ cmd: 'start', timestamp: ctx.currentTime });
-		    running = true;
-		} else {
-		    scheduler.postMessage({ cmd: 'stop' });
-		    running = false;
-		}
-	    })
-
+	    
+	    /*
 	    const evalLoop = document.getElementById('evaluate-loop')
 	    evalLoop.addEventListener('change', e => {				
 		if (e.target.value === 1) {
@@ -225,12 +223,13 @@ if (ctx.audioWorklet === undefined) {
 		    }
 		    scheduler.postMessage({ cmd: 'evaluate_loop' , loop_data: document.getElementById('code_input').value });
 		} 
-	    })
+	    })*/
 
 	    ///////////////////////////	    
 	    // SET KEYBOARD TRIGGERS //
 	    ///////////////////////////
-	    
+
+	    /*
 	    window.onkeydown = function(e) {
 		var key = e.keyCode ? e.keyCode : e.which;
 		if(e.ctrlKey && key == 13) {
@@ -255,5 +254,7 @@ if (ctx.audioWorklet === undefined) {
 		    }
 		}
 	    }
-	})   
+	    })  */
+
+	});
 }

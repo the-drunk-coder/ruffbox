@@ -1,6 +1,4 @@
 #[macro_use]
-extern crate stdweb;
-extern crate web_sys;
 
 //use js_sys::Math;
 pub mod parser;
@@ -10,10 +8,14 @@ use std::collections::hash_map::DefaultHasher;
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use wasm_bindgen::prelude::*;
-
 use crate::seqgen::*;
 
+
+use web_sys::{MessageEvent, Worker, Event};
+//use std::rc::Rc;
+//use std::cell::RefCell;
 use decorum::N32;
+use wasm_bindgen::JsCast;
 
 // A macro to provide `println!(..)`-style syntax for `console.log` logging.
 macro_rules! log {
@@ -380,17 +382,22 @@ impl Scheduler {
                 _ => "Sampler",
             };
 
+
+	    
             if next_event != "~" {
                 // post events that will be dispatched to sampler
-                js! {
-                    postMessage( { source_type: @{ next_source_type }, timestamp: @{ trigger_time }, sample_id: @{ next_event }, params: @{ next_params }} );
-                }
+                //js! {
+		//    console.log("gibble");
+                    //postMessage( { source_type: @{ next_source_type }, timestamp: @{ trigger_time }, sample_id: @{ next_event }, params: @{ next_params }} );
+                //}
+		log!("gibble");
             }
         }
     }
 
     /// The main scheduler recursion.
     pub fn scheduler_routine(&mut self, browser_timestamp: f64) {
+	log!("bst: {}", browser_timestamp);
         if !self.running {
             return;
         }
@@ -414,9 +421,11 @@ impl Scheduler {
 
         // Time-recursive call to scheduler function.
         // i'm looking forward to the day I can do that in pure rust ...
-        js! {
-            self.sleep( @{ self.next_schedule_time } ).then( () => self.scheduler.scheduler_routine( performance.now()));
-        };
+        //js! {
+        //    self.sleep( @{ self.next_schedule_time } ).then( () => self.scheduler.scheduler_routine( performance.now()));
+        //};
+	log!("gbolle");
+	
     }
 
     /// Start this scheduler.
@@ -439,3 +448,66 @@ impl Scheduler {
         self.tempo = tempo;
     }
 }
+
+
+
+/// Run entry point for the main thread.
+#[wasm_bindgen]
+pub fn startup() {
+    // Here, we create our worker. In a larger app, multiple callbacks should be
+    // able to interact with the code in the worker. Therefore, we wrap it in
+    // `Rc<RefCell>` following the interior mutability pattern. Here, it would
+    // not be needed but we include the wrapping anyway as example.
+    let worker_handle = Worker::new("/js/scheduler.js").unwrap();
+    log!("Created a new scheduler from within WASM");
+
+    let callback: Closure<dyn FnMut(MessageEvent)>
+	= Closure::new(move |event: MessageEvent| {
+            log!("Received response: {:?}", &event.data());	        
+	});
+
+    /*
+    // scheduler controls
+    const startSched = document.getElementById('start-scheduler')	   
+    startSched.addEventListener('change', e => {
+    if (e.target.value === 1) {
+    if(ctx.state === "suspended"){
+    ctx.resume();
+}
+    if(!(document.getElementById('tempo').value === tempo)){
+    tempo = document.getElementById('tempo').value;
+    scheduler.postMessage({ cmd: 'set_tempo' , tempo: tempo });
+}
+    scheduler.postMessage({ cmd: 'evaluate_loop' , loop_data: document.getElementById('code_input').value });
+    scheduler.postMessage({ cmd: 'start', timestamp: ctx.currentTime });
+    running = true;
+} else {
+    scheduler.postMessage({ cmd: 'stop' });
+    running = false;
+}
+})
+     */
+
+    let document = web_sys::window().unwrap().document().unwrap();
+    
+    let start_button = document
+        .get_element_by_id("start-scheduler")
+        .expect("#start-scheduler");
+
+    let start_button_callback: Closure<dyn FnMut(_)>
+	= Closure::new(move |event:Event| {
+            log!("start button clicked");
+	    worker_handle.post_message
+	});
+
+    
+    start_button.add_event_listener_with_callback("change", start_button_callback.as_ref().unchecked_ref());
+
+    // need to "forget" this so it stays persistent in the JS scope ?
+    start_button_callback.forget();
+
+    worker_handle.set_onmessage(Some(callback.as_ref().unchecked_ref()));
+
+    callback.forget();
+}
+

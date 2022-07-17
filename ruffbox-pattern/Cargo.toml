@@ -10,7 +10,8 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 wasm-bindgen = "0.2"
-stdweb = "0.4.20"
+wasm-bindgen-futures = "0.4"
+#stdweb = "0.4.20"
 js-sys = "0.3"
 vom_rs = { git = "https://gitlab.com/ellipsenpark/vom.rs" }
 nom = "5.0"
@@ -21,5 +22,11 @@ decorum = "0.3"
 [dependencies.web-sys]
 version = "0.3"
 features = [
-  "console",
+    'console',
+    'Document',
+    'HtmlElement',
+    'HtmlInputElement',
+    'MessageEvent',
+    'Window',
+    'Worker',	
 ]
