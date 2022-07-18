@@ -1,4 +1,4 @@
-//use js_sys::Math;
+#[allow(clippy::type_complexity)]
 pub mod parser;
 pub mod seqgen;
 
@@ -8,7 +8,7 @@ use std::hash::{Hash, Hasher};
 use wasm_bindgen::prelude::*;
 
 use crate::seqgen::*;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use decorum::N32;
 
@@ -70,9 +70,7 @@ impl MainEvent {
 impl PartialEq for MainEvent {
     fn eq(&self, other: &Self) -> bool {
         for (param, value) in self.params.iter() {
-            if !other.params.contains_key(param) {
-                return false;
-            } else if *value != other.params[param] {
+            if !other.params.contains_key(param) || *value != other.params[param] {
                 return false;
             }
         }
@@ -89,6 +87,7 @@ struct EventSequence {
 
 impl EventSequence {
     /// Create an event sequence from a string.    
+    #[allow(clippy::type_complexity)]
     pub fn from_parsed_line_ast(
         input_line: (
             (&str, Vec<(&str, Vec<(&str, f32)>)>),
@@ -154,6 +153,7 @@ impl EventSequence {
     }
 
     /// Update an existing sequence from a string.
+    #[allow(clippy::type_complexity)]
     pub fn update_sequence(
         &mut self,
         input_line: (
@@ -279,9 +279,16 @@ pub struct Scheduler {
     audio_logical_time: f64,
     browser_logical_time: f64,
     lookahead: f64, // in seconds
-    tempo: f64, // currently just the duration of a 16th note ...
+    tempo: f64,     // currently just the duration of a 16th note ...
     event_sequences: Vec<EventSequence>,
     event_variables: HashMap<String, MainEvent>,
+}
+
+// for clippy
+impl Default for Scheduler {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 #[wasm_bindgen]
@@ -353,12 +360,12 @@ impl Scheduler {
         }
     }
 
-    /// Fetch all events from the event sequences, pass then to the JS scheduler 
+    /// Fetch all events from the event sequences, pass then to the JS scheduler
     pub fn generate_events(&mut self) -> Vec<JsValue> {
-	let mut triggers = Vec::new();
-		
+        let mut triggers = Vec::new();
+
         let trigger_time = self.audio_logical_time + self.lookahead;
-		
+
         for seq in self.event_sequences.iter_mut() {
             let (mut next_event, mut next_params) = seq.get_next_event();
 
@@ -378,25 +385,27 @@ impl Scheduler {
                 "sqr" => "LFSquareSynth",
                 _ => "Sampler",
             };
-	    
-	    // might not be the most efficient way to do this but I doubt that the old stdweb
-	    // implementation was any faster ... 
-	    if next_event != "~" {
-		triggers.push(JsValue::from_serde(&TriggerData {
-		    params: next_params,
-		    timestamp: trigger_time,
-		    sample_id: next_event.to_string(),
-		    source_type: next_source_type.to_string(),
-		}).unwrap());
+
+            // might not be the most efficient way to do this but I doubt that the old stdweb
+            // implementation was any faster ...
+            if next_event != "~" {
+                triggers.push(
+                    JsValue::from_serde(&TriggerData {
+                        params: next_params,
+                        timestamp: trigger_time,
+                        sample_id: next_event.to_string(),
+                        source_type: next_source_type.to_string(),
+                    })
+                    .unwrap(),
+                );
             }
         }
 
-	triggers
+        triggers
     }
 
     /// The main scheduler recursion.
     pub fn compensate_time(&mut self, browser_timestamp: f64) -> f64 {
-                       
         // Calculate drift, correct timing.
         // The time at which this is called is most likely later, but never earlier,
         // than the time it SHOULD have been called at (self.browser_logical_time).
@@ -410,8 +419,8 @@ impl Scheduler {
 
         // browser time in milliseconds
         self.browser_logical_time += self.tempo;
-	        
-	next_schedule_time   	
+
+        next_schedule_time
     }
 
     /// Start this scheduler.
@@ -419,9 +428,9 @@ impl Scheduler {
         self.audio_start_time = audio_timestamp;
         self.browser_start_time = browser_timestamp;
         self.audio_logical_time = self.audio_start_time;
-        self.browser_logical_time = self.browser_start_time;                
+        self.browser_logical_time = self.browser_start_time;
     }
-    
+
     /// Set tick duration.
     pub fn set_tempo(&mut self, tempo: f64) {
         self.tempo = tempo;

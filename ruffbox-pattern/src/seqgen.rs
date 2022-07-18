@@ -45,7 +45,7 @@ pub struct CycleSequenceGenerator<T> {
 }
 
 impl<T: Copy> CycleSequenceGenerator<T> {
-    pub fn from_seq(seq: &Vec<T>) -> Self {
+    pub fn from_seq(seq: &[T]) -> Self {
         CycleSequenceGenerator {
             items: seq.to_vec(),
             index: 0,
@@ -91,7 +91,7 @@ pub struct PfaSequenceGenerator<T: Eq + Copy + Hash + Ord + std::fmt::Debug> {
 }
 
 impl<T: Eq + Copy + Hash + Ord + std::fmt::Debug> PfaSequenceGenerator<T> {
-    pub fn from_seq(seq: &Vec<T>) -> Self {
+    pub fn from_seq(seq: &[T]) -> Self {
         PfaSequenceGenerator {
             pfa: Pfa::learn(seq, 3, 0.01, 30),
         }
