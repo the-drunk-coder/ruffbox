@@ -1,7 +1,3 @@
-#[macro_use]
-extern crate stdweb;
-extern crate web_sys;
-
 //use js_sys::Math;
 pub mod parser;
 pub mod seqgen;
@@ -12,6 +8,7 @@ use std::hash::{Hash, Hasher};
 use wasm_bindgen::prelude::*;
 
 use crate::seqgen::*;
+use serde::{Serialize, Deserialize};
 
 use decorum::N32;
 
@@ -264,6 +261,14 @@ impl EventSequence {
     }
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct TriggerData {
+    pub params: HashMap<String, f32>,
+    pub timestamp: f64,
+    pub sample_id: String,
+    pub source_type: String,
+}
+
 /// A simple time-recursion event scheduler running at a fixed time interval.
 #[wasm_bindgen]
 pub struct Scheduler {
@@ -273,9 +278,7 @@ pub struct Scheduler {
     browser_start_time: f64,
     audio_logical_time: f64,
     browser_logical_time: f64,
-    next_schedule_time: f64,
     lookahead: f64, // in seconds
-    running: bool,
     tempo: f64, // currently just the duration of a 16th note ...
     event_sequences: Vec<EventSequence>,
     event_variables: HashMap<String, MainEvent>,
@@ -289,9 +292,7 @@ impl Scheduler {
             browser_start_time: 0.0,
             audio_logical_time: 0.0,
             browser_logical_time: 0.0,
-            next_schedule_time: 0.0,
             lookahead: 0.100,
-            running: false,
             tempo: 128.0,
             event_sequences: Vec::new(),
             event_variables: HashMap::new(),
@@ -352,14 +353,12 @@ impl Scheduler {
         }
     }
 
-    /// Fetch all events from the event sequences, post them to main thread
-    fn generate_and_send_events(&mut self) {
-        if self.event_sequences.is_empty() {
-            return;
-        }
-
+    /// Fetch all events from the event sequences, pass then to the JS scheduler 
+    pub fn generate_events(&mut self) -> Vec<JsValue> {
+	let mut triggers = Vec::new();
+		
         let trigger_time = self.audio_logical_time + self.lookahead;
-
+		
         for seq in self.event_sequences.iter_mut() {
             let (mut next_event, mut next_params) = seq.get_next_event();
 
@@ -379,31 +378,31 @@ impl Scheduler {
                 "sqr" => "LFSquareSynth",
                 _ => "Sampler",
             };
-
-            if next_event != "~" {
-                // post events that will be dispatched to sampler
-                js! {
-                    postMessage( { source_type: @{ next_source_type }, timestamp: @{ trigger_time }, sample_id: @{ next_event }, params: @{ next_params }} );
-                }
+	    
+	    // might not be the most efficient way to do this but I doubt that the old stdweb
+	    // implementation was any faster ... 
+	    if next_event != "~" {
+		triggers.push(JsValue::from_serde(&TriggerData {
+		    params: next_params,
+		    timestamp: trigger_time,
+		    sample_id: next_event.to_string(),
+		    source_type: next_source_type.to_string(),
+		}).unwrap());
             }
         }
+
+	triggers
     }
 
     /// The main scheduler recursion.
-    pub fn scheduler_routine(&mut self, browser_timestamp: f64) {
-        if !self.running {
-            return;
-        }
-
-        // Get current events and post them to main thread.
-        self.generate_and_send_events();
-
+    pub fn compensate_time(&mut self, browser_timestamp: f64) -> f64 {
+                       
         // Calculate drift, correct timing.
         // The time at which this is called is most likely later, but never earlier,
         // than the time it SHOULD have been called at (self.browser_logical_time).
         // To compensate for the delay, we schedule the next call a bit earlier
         // than the actual interval.
-        self.next_schedule_time = self.tempo - (browser_timestamp - self.browser_logical_time);
+        let next_schedule_time = self.tempo - (browser_timestamp - self.browser_logical_time);
 
         // Advance timestamps!
         // audio time in seconds
@@ -411,12 +410,8 @@ impl Scheduler {
 
         // browser time in milliseconds
         self.browser_logical_time += self.tempo;
-
-        // Time-recursive call to scheduler function.
-        // i'm looking forward to the day I can do that in pure rust ...
-        js! {
-            self.sleep( @{ self.next_schedule_time } ).then( () => self.scheduler.scheduler_routine( performance.now()));
-        };
+	        
+	next_schedule_time   	
     }
 
     /// Start this scheduler.
@@ -424,16 +419,9 @@ impl Scheduler {
         self.audio_start_time = audio_timestamp;
         self.browser_start_time = browser_timestamp;
         self.audio_logical_time = self.audio_start_time;
-        self.browser_logical_time = self.browser_start_time;
-        self.running = true;
-        self.scheduler_routine(browser_timestamp);
+        self.browser_logical_time = self.browser_start_time;                
     }
-
-    /// Stop this scheduler.
-    pub fn stop(&mut self) {
-        self.running = false;
-    }
-
+    
     /// Set tick duration.
     pub fn set_tempo(&mut self, tempo: f64) {
         self.tempo = tempo;

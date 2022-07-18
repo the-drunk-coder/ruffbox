@@ -9,14 +9,14 @@ license = "GPL-3.0+"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-wasm-bindgen = "0.2"
-stdweb = "0.4.20"
+wasm-bindgen = {version = "0.2", features = ["serde-serialize"]}
 js-sys = "0.3"
 vom_rs = { git = "https://gitlab.com/ellipsenpark/vom.rs" }
 nom = "5.0"
 rand = { version = "0.8" }
 getrandom = {version = "0.2.7", features=["js"]}
 decorum = "0.3"
+serde = {version = "1.0", features=["derive"]}
 
 [dependencies.web-sys]
 version = "0.3"
