@@ -56,33 +56,7 @@ The next challenge was the scheduling part. The original idea was to write as mu
 WASM threads aren't available yet, so I didn't get around using a web worker thread. The experimental module web worker allows you to
 import a WASM module (this time generated using `wasm-bindgen`) directly in the worker (see [scheduler.js](js/scheduler.js) ).
 
-Now what's needed is some way to achieve precise scheduling. The sample player was modified in a way so that it allows to schedule events
-to a time point in the future. That way, events can be given a timestamp at which they'll be executed, inspired by the way OSC bundles are timestamped.
-
-The scheduling uses a temporal recursion loop. As the web worker thread doesn't allow for precise scheduling. To call the next scheduling iteration, an ad-hoc sleep function is called using `stdweb`'s `js!` macro:
-
-```javascript
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-```
-
-```rust
-js! {            
-    self.sleep( @{ self.next_schedule_time } ).then( () => self.scheduler.scheduler_routine( performance.now()));
-}; 
-```
-
-That of course means that the next scheduler iteration might be called a couple of milliseconds late. To compensate for that, 
-the scheduler runs ahead of time in relation to the audio thread. It keeps track of the logical time (when the event should have happened), and sends out the event to the sampler with a fixed delay, thus compensating for the imprecision. 
-
-The actual message passing is the other spot where I didn't find a solution in pure Rust yet. The worker's `postMessage` macro 
-is called using `stdweb`'s `js!` macro:
-
-```rust
-js! {                
-   postMessage( { sample: @{ next_event }, timestamp: @{ trigger_time } } );
-}
-```
-
-The worker's listener then posts the message to the audio worklet. 
+As of 2022, it seems that threads still are somewhat tricky to use (`wasm_thread` is ready but doesn't allow to use `postMessage`), 
+and `stdweb` seems broken and hasn't been maintained for a while, so I moved the time iteration to plain JS, and only use the Rust 
+part for parsing and generating the sequences, as well as doing the time compensation, only using the methods exposed by `wasm_bindgen`
+and a custom data structure.
