@@ -254,6 +254,9 @@ impl EventSequence {
                     };
                 }
 
+                // set some defaults
+                final_param_map.entry("pos".to_string()).or_insert(0.5);
+
                 (ev.name.clone(), final_param_map)
             }
             None => ("~".to_string(), final_param_map),

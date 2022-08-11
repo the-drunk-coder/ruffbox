@@ -1,4 +1,4 @@
-ruffbox-synth/target/*
+ruffbox-synth-web/target/*
 ruffbox-pattern/target/*
 ruffbox-pattern/pkg/*
 ruffbox-lisp**	

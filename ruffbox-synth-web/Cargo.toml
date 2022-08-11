@@ -1,6 +1,6 @@
 [package]
-name = "ruffbox-synth"
-version = "1.1.1"
+name = "ruffbox-synth-web"
+version = "1.2.1"
 authors = ["nik <nik@parkellipsen.de>"]
 edition = "2018"
 license = "MIT"
@@ -10,10 +10,12 @@ crate-type = ["cdylib"]
 
 [dependencies]
 num = "0.4.0"
-lazy_static = "1.4.0"
+#lazy_static = "1.4.0"
 wee_alloc = { version = "0.4.5", optional = true }
 crossbeam = "0.8.1"
 parking_lot = "0.12.1"
+ruffbox_synth = "0.4.0"
+once_cell = "1.13.0"
 
 [dev-dependencies]
 assert_approx_eq = "1.1.0"

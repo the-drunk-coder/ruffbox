@@ -1,11 +1,11 @@
 #!/bin/sh -e
 
 echo "compile sampler to wasm"
-cd ruffbox-synth
+cd ruffbox-synth-web
 cargo build --target wasm32-unknown-unknown --release
 
 echo "copy"
-cp target/wasm32-unknown-unknown/release/ruffbox_synth.wasm ../wasm/
+cp target/wasm32-unknown-unknown/release/ruffbox_synth_web.wasm ../wasm/
 cd ..
 
 echo "compile scheduler to wasm"
