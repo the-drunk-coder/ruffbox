@@ -171,7 +171,7 @@ if (ctx.audioWorklet === undefined) {
 	    //////////////////////////
 	    
 	    // this only works in latest chrome/chromium with experimental features flag enabled ...
-	    let scheduler = new Worker('js/scheduler.js', { type : "module"});
+	    let scheduler = new Worker('js/scheduler.js');
 
 	    // set event scheduler message callback
 	    scheduler.onmessage = function(event) {

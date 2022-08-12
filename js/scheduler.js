@@ -1,15 +1,6 @@
-import init, { Scheduler } from './pkg/ruffbox_pattern.js';
+importScripts("./pkg/ruffbox_pattern.js")
 
-async function get_scheduler() {
-    // First up we need to actually load the wasm file, so we use the
-    // default export to inform it where the wasm file is located on the
-    // server, and then we wait on the returned promise to wait for the
-    // wasm to be loaded.    
-    
-    await init();
-    
-    return Scheduler.new();	  
-}
+const { Scheduler } = wasm_bindgen;
 
 // In a previous version, more of this was done in the Rust part using
 // stdweb's `js!` snippet macro, but that stopped working and didn't
@@ -45,8 +36,8 @@ function time_step(start, init_time) {
 }
 
 // fetch the scheduler instance
-get_scheduler().then(scheduler => {
-    self.scheduler = scheduler;
+wasm_bindgen("./pkg/ruffbox_pattern_bg.wasm").then(wasm => {
+    self.scheduler = Scheduler.new();
 
     // now that we have a scheduler, set scheduler controls
     self.onmessage = function(e) {
