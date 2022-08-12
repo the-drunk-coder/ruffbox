@@ -26,13 +26,13 @@ cyc >> saw ~ ~ saw ~ @freq: cyc >> 100 150 200 80 @lpf: bounce >> 200 500 20
       </div>
       
       <br/>
-      <b>Usage:</b> Each symbol is a sound event, each line is a loop! <br/>
+      <b>Usage:</b> Each line is a loop! <br/>
       <b>Time:</b> All sequences run over a fixed time grid! <br/><br/>
       <b>Sound Events:</b><br/>
       <i>Samples: </i> bd, sn, hh, casio = bassdrum, snare, hihat, casio beep <br/> 
       <i>Synths: </i> saw, sqr, sine = sawtooth, squarewave, sinewave <br/>
       ~ = silence <br/><br/>
-      <b>Parameters: </b> rate (samples only), freq (synths only), pos, lp-freq, lp-q, lp-dist, rev, del, atk, rel, dur<br/>
+      <b>Parameters: </b> rate (samples only), freq (synths only), pos, lpf (lowpass freq), lpq (lowpass res), lpd (lowpass distortion), rev, del, atk, rel, dur<br/>
       <br/>
       <b>Sequence Generators:</b> cyc = cycle, rnd = random, learn = markov chain, bounce = half-rectified sine curve, ramp = ramp <br/>            
       <b>Pattern Anatomy:</b> [cyc | rnd | learn] >> [sound events] @PARAM: [cyc | rnd | learn | bounce | ramp] >> [seq | param list]
